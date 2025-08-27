@@ -1,15 +1,10 @@
 {
-  "name": "diginum-netlify-functions",
+  "name": "netlify-functions",
   "version": "1.0.0",
-  "description": "DigiNum API functions for Netlify",
-  "main": "api.js",
+  "description": "Netlify functions for DigiNum",
+  "main": "index.js",
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.7",
-    "bcrypt": "^5.1.1",
-    "dotenv": "^16.4.5",
-    "node-fetch": "^2.7.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "axios": "^1.6.0",
+    "@supabase/supabase-js": "^2.38.0"
   }
 }
