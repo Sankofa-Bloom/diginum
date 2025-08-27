@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NumberCard from '@/components/NumberCard';
 import LanguageToggle from '@/components/LanguageToggle';
+import AddFundsButton from '@/components/AddFundsButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { fetchDashboardOrders } from '@/lib/api';
@@ -160,6 +161,10 @@ React.useEffect(() => {
             </div>
             <div className="flex items-center gap-2">
               <LanguageToggle />
+              <div className="hidden sm:flex items-center gap-2 mr-2">
+                <AddFundsButton amount={5} />
+                <AddFundsButton amount={10} />
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
