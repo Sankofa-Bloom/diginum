@@ -54,15 +54,25 @@ exports.handler = async (event, context) => {
 
     console.log('Swychr auth response:', {
       status: authResponse.status,
-      data: authResponse.data
+      data: authResponse.data,
+      headers: authResponse.headers
     });
 
-    if (authResponse.data.status !== 200) {
-      throw new Error(`Failed to authenticate with Swychr: ${authResponse.data.message || 'Unknown error'}`);
+    // Handle different response formats
+    let authToken;
+    if (authResponse.data.token) {
+      authToken = authResponse.data.token;
+    } else if (authResponse.data.access_token) {
+      authToken = authResponse.data.access_token;
+    } else if (authResponse.data.auth_token) {
+      authToken = authResponse.data.auth_token;
+    } else if (authResponse.headers.authorization) {
+      authToken = authResponse.headers.authorization.replace('Bearer ', '');
+    } else {
+      throw new Error(`Unexpected auth response format: ${JSON.stringify(authResponse.data)}`);
     }
 
-    const authToken = authResponse.data.token;
-    console.log('Authentication successful, token received');
+    console.log('Authentication successful, token received:', authToken ? 'YES' : 'NO');
 
     // Create payment link
     const paymentData = {
