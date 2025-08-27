@@ -22,24 +22,6 @@ const logger = createLogger({
   ],
 });
 
-export const logPaymentEvent = (type: string, data: any) => {
-  logger.info(`Payment Event - ${type}`, {
-    ...data,
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-  });
-};
 
-export const logPaymentError = (type: string, error: any, data: any = {}) => {
-  logger.error(`Payment Error - ${type}`, {
-    error: {
-      message: error.message,
-      stack: error.stack,
-    },
-    ...data,
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV,
-  });
-};
 
 

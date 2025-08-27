@@ -16,8 +16,8 @@ const Home = () => {
     },
     {
       icon: <Shield className="h-8 w-8 text-success" />,
-      title: 'Secure Payment',
-      description: 'Safe and reliable payment processing.',
+      title: 'Secure Service',
+      description: 'Safe and reliable verification service.',
     },
     {
       icon: <Zap className="h-8 w-8 text-warning" />,
@@ -29,7 +29,7 @@ const Home = () => {
   const steps = [
     'Select your service',
     'Choose a country',
-    'Complete payment',
+    'Confirm order',
     'Get your number',
     'Verify your account',
   ];

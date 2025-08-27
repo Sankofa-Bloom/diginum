@@ -77,7 +77,7 @@ interface DashboardStats {
   totalRevenue: number;
   recentOrders: number;
   activeOrders: number;
-  pendingPayments: number;
+
   successRate: number;
 }
 
@@ -85,8 +85,7 @@ interface SystemSettings {
   smsApiKey: string;
   smsApiKeyConfigured: boolean;
   defaultMarkup: number;
-  campayConfigured: boolean;
-  stripeConfigured: boolean;
+
   serverTime: string;
   environment: string;
 }
@@ -109,7 +108,7 @@ interface PriceAdjustment {
 
 interface Transaction {
   id: string;
-  type: 'order' | 'payment';
+  type: 'order';
   userId: string;
   amount: number;
   currency: string;
@@ -278,8 +277,7 @@ const Admin = () => {
     switch (type) {
       case 'order':
         return <Phone className="h-4 w-4 text-blue-600" />;
-      case 'payment':
-        return <CreditCard className="h-4 w-4 text-green-600" />;
+
       default:
         return <Activity className="h-4 w-4 text-gray-600" />;
     }
@@ -404,22 +402,7 @@ const Admin = () => {
                        )}
                       <span className="text-sm">SMS API</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                                             {systemSettings.campayConfigured ? (
-                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                       ) : (
-                         <XCircle className="h-4 w-4 text-red-600" />
-                       )}
-                      <span className="text-sm">Campay</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                                             {systemSettings.stripeConfigured ? (
-                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                       ) : (
-                         <XCircle className="h-4 w-4 text-red-600" />
-                       )}
-                      <span className="text-sm">Stripe</span>
-                    </div>
+
                     <div className="flex items-center gap-2">
                       <Clock2 className="h-4 w-4 text-blue-600" />
                       <span className="text-sm">{systemSettings.environment}</span>
@@ -767,22 +750,7 @@ const Admin = () => {
                       <div>
                         <span className="font-medium">Server Time:</span> {new Date(systemSettings.serverTime).toLocaleString()}
                       </div>
-                      <div>
-                        <span className="font-medium">Campay:</span> 
-                        {systemSettings.campayConfigured ? (
-                          <span className="text-green-600 ml-2">✓ Configured</span>
-                        ) : (
-                          <span className="text-red-600 ml-2">✗ Not configured</span>
-                        )}
-                      </div>
-                      <div>
-                        <span className="font-medium">Stripe:</span> 
-                        {systemSettings.stripeConfigured ? (
-                          <span className="text-green-600 ml-2">✓ Configured</span>
-                        ) : (
-                          <span className="text-red-600 ml-2">✗ Not configured</span>
-                        )}
-                      </div>
+
                     </div>
                   </div>
                 )}

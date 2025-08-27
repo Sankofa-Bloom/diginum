@@ -21,7 +21,7 @@ const translations = {
     'home.subtitle': 'Buy temporary phone numbers for SMS verification with Mobile Money. Secure, fast, and reliable.',
     'home.cta': 'Buy Number Now',
     'home.features.instant': 'Instant Delivery',
-    'home.features.secure': 'Secure Payment',
+    'home.features.secure': 'Secure Service',
     'home.features.support': '24/7 Support',
     
     // Buy page
@@ -61,7 +61,7 @@ const translations = {
     'home.subtitle': 'Achetez des numéros de téléphone temporaires pour la vérification SMS avec Mobile Money. Sécurisé, rapide et fiable.',
     'home.cta': 'Acheter un Numéro Maintenant',
     'home.features.instant': 'Livraison Instantanée',
-    'home.features.secure': 'Paiement Sécurisé',
+    'home.features.secure': 'Service Sécurisé',
     'home.features.support': 'Support 24/7',
     
     // Buy page

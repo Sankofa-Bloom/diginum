@@ -56,22 +56,17 @@
   - [ ] SUPABASE_KEY (production service role key)
   - [ ] SUPABASE_JWT_SECRET (production JWT secret)
   - [ ] SMS_API_KEY (production SMS provider key)
-  - [ ] STRIPE_SECRET_KEY (production Stripe key)
-  - [ ] STRIPE_WEBHOOK_SECRET (production webhook secret)
-  - [ ] CAMPAY_API_KEY (production Campay key)
-  - [ ] CAMPAY_WEBHOOK_KEY (production webhook key)
+
   - [ ] SMTP_USER (production email)
   - [ ] SMTP_PASS (production email password)
-  - [ ] FAPSHI_PUBLIC_KEY (production Fapshi key)
-  - [ ] FAPSHI_SECRET_KEY (production Fapshi secret)
+
   - [ ] FRONTEND_URL (production domain)
   - [ ] BACKEND_URL (production API domain)
 
 - [ ] Update .env with production values:
   - [ ] VITE_SUPABASE_URL (production project)
   - [ ] VITE_SUPABASE_ANON_KEY (production anon key)
-  - [ ] VITE_STRIPE_PUBLIC_KEY (production publishable key)
-  - [ ] VITE_FAPSHI_ENVIRONMENT=live
+
 
 ### Domain Configuration
 - [ ] Update CORS origins in backend/index.js
@@ -97,12 +92,12 @@
 - [ ] Run security audit (npm audit)
 - [ ] Test authentication flows
 - [ ] Verify CORS configuration
-- [ ] Test payment integrations
-- [ ] Verify webhook security
+
+
 
 ### Functionality Testing
 - [ ] Test user registration/login
-- [ ] Test payment processing
+
 - [ ] Test SMS functionality
 - [ ] Test email functionality
 - [ ] Test admin functions
@@ -117,7 +112,7 @@
 
 ### Monitoring
 - [ ] Monitor error logs
-- [ ] Monitor payment transactions
+
 - [ ] Monitor user activity
 - [ ] Monitor system performance
 
@@ -135,11 +130,7 @@
 - ✅ Input validation implemented
 - ✅ SQL injection protection (Supabase)
 
-### Payment Security
-- ✅ Payment providers properly configured
-- ✅ Webhook verification implemented
-- ✅ Transaction logging enabled
-- ✅ Error handling for failed payments
+
 
 ### Data Protection
 - ✅ User data properly secured
@@ -160,7 +151,7 @@ If issues arise in production:
 
 - **System Administrator**: [Add contact]
 - **Database Administrator**: [Add contact]
-- **Payment Provider Support**: [Add contact]
+
 - **Hosting Provider Support**: [Add contact]
 
 ---

@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Complete Netlify deployment setup
-- Fapshi payment gateway integration
+
 - Countries API endpoint (133 countries)
 - Account balance API endpoint
 - Exchange rates API with 29 currencies

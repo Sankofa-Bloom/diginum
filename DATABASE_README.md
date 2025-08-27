@@ -34,7 +34,7 @@ You should see:
 - **`services`** - Available services with **profit margin tracking**
 - **`exchange_rates`** - Currency conversion rates
 - **`user_balances`** - User account balances
-- **`payments`** - Payment transactions
+
 - **`pricing_history`** - **Historical pricing changes and tracking**
 - **`profit_tracking`** - **Financial analytics and profit margins**
 

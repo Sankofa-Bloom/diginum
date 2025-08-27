@@ -341,45 +341,7 @@ export class CurrencyService {
     }
   }
 
-  // Save payment transaction to database
-  static async savePaymentTransaction(
-    originalAmount: number,
-    convertedAmount: number,
-    currency: string,
-    rate: number,
-    fxBuffer: number,
-    userId?: string
-  ): Promise<void> {
-    try {
-      // Get current user if userId not provided
-      let currentUserId = userId;
-      if (!currentUserId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        currentUserId = user?.id;
-      }
 
-      const { error } = await supabase
-        .from('payment_transactions')
-        .insert([
-          {
-            user_id: currentUserId,
-            original_amount_usd: originalAmount,
-            converted_amount: convertedAmount,
-            currency: currency,
-            exchange_rate: rate,
-            fx_buffer: fxBuffer
-          }
-        ]);
-
-      if (error) {
-        console.error('Error saving payment transaction:', error);
-        throw new Error(`Database error: ${error.message || 'Failed to save transaction'}`);
-      }
-    } catch (error) {
-      console.error('Error saving payment transaction:', error);
-      throw error;
-    }
-  }
 
   // Get user's preferred currency (from IP or stored preference)
   static async getUserCurrency(): Promise<string> {

@@ -37,7 +37,7 @@ React.useEffect(() => {
     .finally(() => setIsLoading(false));
 }, []);
 
-  // Add new order from payment if it exists
+  // Add new order if it exists
   React.useEffect(() => {
     if (location.state?.newOrder) {
       setOrders(prev => [location.state.newOrder, ...prev]);

@@ -36,10 +36,7 @@ CREATE TABLE IF NOT EXISTS public.orders (
     sms_status VARCHAR(50),
     sms_response JSONB,
     
-    -- PAYMENT INFORMATION
-    payment_reference VARCHAR(255),
-    payment_status VARCHAR(20) DEFAULT 'pending',
-    payment_provider VARCHAR(50),
+
     
     -- ORDER DETAILS
     order_type VARCHAR(50) DEFAULT 'phone_number',
@@ -97,20 +94,7 @@ CREATE TABLE IF NOT EXISTS public.user_balances (
     UNIQUE(user_id, currency)
 );
 
--- 6. Create payments table
-CREATE TABLE IF NOT EXISTS public.payments (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    provider VARCHAR(50) NOT NULL DEFAULT 'fapshi',
-    provider_transaction_id VARCHAR(255),
-    reference VARCHAR(255) UNIQUE NOT NULL,
-    amount DECIMAL(15, 2) NOT NULL,
-    currency VARCHAR(3) NOT NULL DEFAULT 'XAF',
-    status VARCHAR(20) DEFAULT 'pending',
-    provider_response JSONB,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+
 
 -- 7. Create pricing_history table for tracking price changes
 CREATE TABLE IF NOT EXISTS public.pricing_history (
@@ -164,16 +148,13 @@ CREATE TABLE IF NOT EXISTS public.profit_tracking (
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at);
-CREATE INDEX IF NOT EXISTS idx_orders_payment_reference ON public.orders(payment_reference);
+
 
 -- User balances indexes
 CREATE INDEX IF NOT EXISTS idx_user_balances_user_id ON public.user_balances(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_balances_currency ON public.user_balances(currency);
 
--- Payments indexes
-CREATE INDEX IF NOT EXISTS idx_payments_user_id ON public.payments(user_id);
-CREATE INDEX IF NOT EXISTS idx_payments_reference ON public.payments(reference);
-CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
+
 
 -- Services indexes
 CREATE INDEX IF NOT EXISTS idx_services_country_id ON public.services(country_id);
@@ -257,7 +238,7 @@ ALTER TABLE public.countries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.exchange_rates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_balances ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE public.pricing_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profit_tracking ENABLE ROW LEVEL SECURITY;
 
@@ -281,13 +262,7 @@ CREATE POLICY "Users can insert own balance" ON public.user_balances
 CREATE POLICY "Users can update own balance" ON public.user_balances
     FOR UPDATE USING (auth.uid() = user_id);
 
--- Payments policies
-CREATE POLICY "Users can view own payments" ON public.payments
-    FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own payments" ON public.payments
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can update own payments" ON public.payments
-    FOR UPDATE USING (auth.uid() = user_id);
+
 
 -- Public read access for countries, services, and exchange rates
 CREATE POLICY "Anyone can view countries" ON public.countries
@@ -312,7 +287,7 @@ CREATE POLICY "Users can view profit tracking" ON public.profit_tracking
 -- Grant permissions to authenticated users
 GRANT SELECT, INSERT, UPDATE ON public.orders TO authenticated;
 GRANT SELECT, INSERT, UPDATE ON public.user_balances TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON public.payments TO authenticated;
+
 
 -- Grant read-only permissions to authenticated users
 GRANT SELECT ON public.countries TO authenticated;
@@ -498,7 +473,7 @@ SELECT
     (SELECT COUNT(*) FROM information_schema.columns WHERE table_name = t.table_name) as column_count
 FROM information_schema.tables t
 WHERE table_schema = 'public' 
-AND table_name IN ('orders', 'countries', 'services', 'exchange_rates', 'user_balances', 'payments', 'pricing_history', 'profit_tracking')
+AND table_name IN ('orders', 'countries', 'services', 'exchange_rates', 'user_balances', 'pricing_history', 'profit_tracking')
 ORDER BY table_name;
 
 -- Show data counts
@@ -524,7 +499,7 @@ SELECT
     CASE WHEN rowsecurity THEN 'Enabled' ELSE 'Disabled' END as rls_status
 FROM pg_tables 
 WHERE schemaname = 'public' 
-AND tablename IN ('orders', 'countries', 'services', 'exchange_rates', 'user_balances', 'payments', 'pricing_history', 'profit_tracking')
+AND tablename IN ('orders', 'countries', 'services', 'exchange_rates', 'user_balances', 'pricing_history', 'profit_tracking')
 ORDER BY tablename;
 
 -- Test profit calculation function

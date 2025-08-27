@@ -6,9 +6,7 @@
 - [ ] Set up all required environment variables in production:
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_KEY`
-  - `VITE_STRIPE_PUBLIC_KEY`
-  - `STRIPE_SECRET_KEY`
-  - `STRIPE_WEBHOOK_SECRET`
+
   - `FRONTEND_URL` (for password reset redirect)
   - `SUPABASE_URL`
   - `SUPABASE_KEY`
@@ -67,7 +65,7 @@
 
 3. **Post-Deployment**
    - Verify all features work
-   - Test payment flows
+
    - Test SMS functionality
    - Verify logging works
    - Monitor for errors

@@ -31,7 +31,7 @@
 - ✅ Popular services showcase (WhatsApp, Telegram, etc.)
 - ✅ Step-by-step process explanation
 - ✅ Feature highlights with icons
-- ✅ Payment methods display (MTN MoMo, Orange Money)
+
 - ✅ Call-to-action sections
 - ✅ Professional footer
 
@@ -55,17 +55,12 @@
 - Service prices range from ₣250-₣800 XAF
 - Country surcharges range from ₣300-₣520 XAF
 
-### 3. Payment Page (`/payment`)
-**Features Implemented:**
-- ✅ Payment method selection (MTN MoMo / Orange Money)
-- ✅ Phone number input with formatting
-- ✅ Order recap display
-- ✅ Payment processing simulation
+
 - ✅ Loading states and user feedback
 - ✅ Error handling for incomplete forms
 
 **Simulation:**
-- 3-second payment processing delay
+- 3-second order processing delay
 - Success/failure scenarios
 - Automatic redirect to dashboard on success
 
@@ -89,13 +84,13 @@
 - ✅ Revenue and transaction analytics
 - ✅ Transaction table with filtering and search
 - ✅ Status management (refund, force complete)
-- ✅ Payment method tracking
+
 - ✅ Data export functionality (CSV)
 - ✅ Real-time statistics dashboard
 
 **Mock Data:**
 - Sample transactions with various statuses
-- User phone numbers and payment methods
+
 - Revenue calculations and success rates
 
 ## 🎨 Design Components
@@ -111,14 +106,14 @@
 - **Button variants**: Primary, Success, MTN (yellow), Orange
 - **Card variants**: Elevated, Service selection, Number display
 - **Status badges**: Active (green), Pending (yellow), Expired (red)
-- **Payment method badges**: MTN MoMo, Orange Money
+
 
 ## 🔄 User Flow Implementation
 
 ### Complete Purchase Flow
 1. **Home** → Click "Acheter Maintenant"
 2. **Buy** → Select service → Select country → See total price
-3. **Payment** → Choose MoMo method → Enter phone → Confirm payment
+
 4. **Dashboard** → View active number → Receive SMS code → Copy code
 
 ### Admin Management Flow
@@ -167,13 +162,7 @@
 
 ## 🎯 Placeholder Features Ready for Backend Integration
 
-### 1. Payment Processing
-**Current**: Simulated 3-second delay with success/failure
-**Ready for**: Campay API integration
-- Payment method selection
-- Phone number validation
-- Webhook handling preparation
-- Transaction status tracking
+
 
 ### 2. Number Provider API
 **Current**: Mock phone numbers and SMS codes
@@ -270,7 +259,7 @@
 ## 📋 Next Steps for Backend Integration
 
 ### Priority 1: Core Functionality
-1. Connect to Campay payment API
+
 2. Integrate SMS activation service
 3. Implement real-time SMS polling
 4. Add transaction persistence
@@ -314,7 +303,7 @@ npm run preview
 ### User Journey Testing
 1. **First-time user**: Home → Learn about service → Make purchase
 2. **Returning user**: Dashboard → Quick new purchase
-3. **Failed payment**: Payment → Error handling → Retry
+
 4. **SMS reception**: Active order → Refresh → Copy code
 
 ### Admin Testing
@@ -332,7 +321,7 @@ npm run preview
 
 ### Business Metrics
 - Daily/monthly revenue
-- Payment method preferences
+
 - Popular services/countries
 - Success rate by provider
 

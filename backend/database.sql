@@ -45,42 +45,9 @@ CREATE TABLE IF NOT EXISTS price_adjustments (
   CONSTRAINT unique_service_country UNIQUE (service, country)
 );
 
--- Drop and recreate add_funds_payments table to fix precision issues
-DROP TABLE IF EXISTS add_funds_payments CASCADE;
 
--- Create add_funds_payments table
-CREATE TABLE IF NOT EXISTS add_funds_payments (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID NOT NULL,
-  amount_usd DECIMAL(10, 2) NOT NULL,
-  amount_original DECIMAL(10, 2) NOT NULL,
-  currency VARCHAR(3) NOT NULL,
-  phone_number VARCHAR(20) NOT NULL,
-  reference VARCHAR(100) UNIQUE NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'pending',
-  campay_transaction_id VARCHAR(100),
-  exchange_rate DECIMAL(15, 6) NOT NULL,
-  markup DECIMAL(5, 2) NOT NULL DEFAULT 2.0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
--- Payment Transactions Table
--- Stores both original USD amounts and converted local currency amounts for reporting
-CREATE TABLE IF NOT EXISTS payment_transactions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  original_amount_usd DECIMAL(10,2) NOT NULL,
-  converted_amount DECIMAL(10,2) NOT NULL,
-  currency VARCHAR(3) NOT NULL,
-  exchange_rate DECIMAL(10,6) NOT NULL,
-  fx_buffer DECIMAL(10,2) NOT NULL DEFAULT 0,
-  payment_reference VARCHAR(255),
-  payment_status VARCHAR(20) DEFAULT 'pending',
-  payment_provider VARCHAR(50),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -90,14 +57,9 @@ CREATE INDEX IF NOT EXISTS idx_users_reset_password_token ON users(reset_passwor
 CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE INDEX IF NOT EXISTS idx_exchange_rates_currency ON exchange_rates(currency);
 CREATE INDEX IF NOT EXISTS idx_price_adjustments_service_country ON price_adjustments(service, country);
-CREATE INDEX IF NOT EXISTS idx_add_funds_payments_user_id ON add_funds_payments(user_id);
-CREATE INDEX IF NOT EXISTS idx_add_funds_payments_reference ON add_funds_payments(reference);
-CREATE INDEX IF NOT EXISTS idx_add_funds_payments_status ON add_funds_payments(status);
 
--- Index for faster queries
-CREATE INDEX IF NOT EXISTS idx_payment_transactions_user_id ON payment_transactions(user_id);
-CREATE INDEX IF NOT EXISTS idx_payment_transactions_created_at ON payment_transactions(created_at);
-CREATE INDEX IF NOT EXISTS idx_payment_transactions_currency ON payment_transactions(currency);
+
+
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -108,11 +70,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Trigger to automatically update updated_at
-CREATE TRIGGER update_payment_transactions_updated_at 
-    BEFORE UPDATE ON payment_transactions 
-    FOR EACH ROW 
-    EXECUTE FUNCTION update_updated_at_column();
+
 
 -- Insert default exchange rates
 INSERT INTO exchange_rates (currency, rate, markup)

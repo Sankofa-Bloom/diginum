@@ -9,8 +9,7 @@ import { CurrencyProvider } from "./contexts/CurrencyContext";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import BuyPage from "./pages/BuyPage";
-import AddFunds from "./pages/AddFunds";
-import PaymentSuccess from "./pages/PaymentSuccess";
+
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
@@ -104,30 +103,7 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="add-funds" 
-          element={
-            <ProtectedRoute>
-              <AddFunds />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="payment/success" 
-          element={
-            <ProtectedRoute>
-              <PaymentSuccess />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="payment/processing" 
-          element={
-            <ProtectedRoute>
-              <PaymentSuccess />
-            </ProtectedRoute>
-          } 
-        />
+
         <Route 
           path="dashboard" 
           element={

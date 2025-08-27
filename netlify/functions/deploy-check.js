@@ -19,9 +19,6 @@ exports.handler = async (event, context) => {
     const envVars = {
       NODE_ENV: process.env.NODE_ENV,
       TEST_MODE: process.env.TEST_MODE,
-      SWYCHR_EMAIL: process.env.SWYCHR_EMAIL ? 'SET' : 'NOT_SET',
-      SWYCHR_PASSWORD: process.env.SWYCHR_PASSWORD ? 'SET' : 'NOT_SET',
-      SWYCHR_BASE_URL: process.env.SWYCHR_BASE_URL,
       SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'NOT_SET',
       PORT: process.env.PORT,
       // Check if we can access the function context

@@ -3,7 +3,7 @@
 ## Overview
 
 This document describes the implementation of a multi-currency system for DigiNum that allows users to:
-- Make payments in their local currency
+- View prices in their local currency
 - See dual currency displays (local + USD)
 - Have all backend amounts stored in USD (base currency)
 - Get real-time exchange rates updated every 24 hours
@@ -13,7 +13,7 @@ This document describes the implementation of a multi-currency system for DigiNu
 ### Backend (Always USD)
 - **Database**: All amounts stored in USD cents (e.g., 1000 = $10.00)
 - **API Responses**: Return USD amounts for consistency
-- **Payment Processing**: Convert local currency to USD before storage
+- **Price Processing**: Convert local currency to USD before storage
 
 ### Frontend (Local Currency + USD)
 - **Auto-detection**: Detects user's country and sets local currency
@@ -39,10 +39,7 @@ This document describes the implementation of a multi-currency system for DigiNu
 - Handles loading states during conversion
 - Responsive design with different sizes
 
-### 3. Swychr Payment Functions
-- **`swychr-create-payment-v4.js`**: Creates payments in local currency
-- **`swychr-check-status.js`**: Checks payment status
-- Both functions return currency information for proper conversion
+
 
 ### 4. Exchange Rate Update Function (`netlify/functions/update-exchange-rates.js`)
 - Runs every 24 hours to update rates from Fixer API
@@ -97,18 +94,7 @@ const usdAmount = await CurrencyService.convertLocalToUSD(850, 'EUR');
 console.log(usdAmount); // Amount in USD
 ```
 
-### Payment Creation
-```tsx
-// Create payment in local currency
-const paymentData = {
-  amount: 50, // 50 EUR
-  currency: 'EUR',
-  country_code: 'DE',
-  // ... other fields
-};
 
-// Backend stores as USD equivalent (e.g., 54.25 USD)
-```
 
 ## Database Schema
 
@@ -122,29 +108,13 @@ CREATE TABLE exchange_rates (
 );
 ```
 
-### Payment Transactions Table
-```sql
-CREATE TABLE payment_transactions (
-  id UUID PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id),
-  original_amount_usd INTEGER NOT NULL, -- Always in USD cents
-  converted_amount INTEGER NOT NULL, -- Amount in local currency
-  currency VARCHAR(3) NOT NULL,
-  exchange_rate DECIMAL(10,6) NOT NULL,
-  fx_buffer INTEGER NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+
 
 ## API Endpoints
 
 ### Exchange Rates
 - `GET /api/exchange-rates` - Get current exchange rates
 - `POST /update-exchange-rates` - Update rates from Fixer API
-
-### Payments
-- `POST /.netlify/functions/swychr-create-payment-v4` - Create payment in local currency
-- `POST /.netlify/functions/swychr-check-status` - Check payment status
 
 ## Security Considerations
 
@@ -170,7 +140,7 @@ CREATE TABLE payment_transactions (
 ### Test Mode
 When `TEST_MODE=true`:
 - Functions return mock responses
-- No real API calls to Swychr
+
 - Test currency conversions work
 - All amounts use test data
 
@@ -195,13 +165,13 @@ expect(conversion.fxBuffer).toBeGreaterThan(0);
 ### Key Metrics
 - Exchange rate update success rate
 - Currency conversion accuracy
-- Payment processing in different currencies
+- Currency conversion accuracy
 - User currency preferences
 
 ### Logs to Watch
 - Fixer API response times
 - Currency conversion errors
-- Payment creation failures
+- Rate update failures
 - Rate update frequency
 
 ## Future Enhancements
