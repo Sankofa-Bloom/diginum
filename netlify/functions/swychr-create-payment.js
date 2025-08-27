@@ -45,17 +45,44 @@ exports.handler = async (event, context) => {
     }
 
     console.log('Attempting to authenticate with Swychr...');
-    
-    // Get auth token first
-    const authResponse = await axios.post('https://api.accountpe.com/api/payin/admin/auth', {
+    console.log('Using credentials:', {
       email: process.env.SWYCHR_EMAIL,
-      password: process.env.SWYCHR_PASSWORD
+      password: process.env.SWYCHR_PASSWORD ? 'SET' : 'NOT_SET',
+      baseUrl: process.env.SWYCHR_BASE_URL || 'https://api.accountpe.com/api/payin'
     });
+    
+    // Try different possible auth endpoints
+    let authResponse;
+    let authEndpoint = 'https://api.accountpe.com/api/payin/admin/auth';
+    
+    try {
+      console.log('Trying auth endpoint:', authEndpoint);
+      authResponse = await axios.post(authEndpoint, {
+        email: process.env.SWYCHR_EMAIL,
+        password: process.env.SWYCHR_PASSWORD
+      });
+    } catch (authError) {
+      console.log('First auth endpoint failed, trying alternative...');
+      // Try alternative endpoint
+      try {
+        authEndpoint = 'https://api.accountpe.com/api/payin/auth';
+        console.log('Trying alternative auth endpoint:', authEndpoint);
+        authResponse = await axios.post(authEndpoint, {
+          email: process.env.SWYCHR_EMAIL,
+          password: process.env.SWYCHR_PASSWORD
+        });
+      } catch (altAuthError) {
+        console.log('Alternative auth endpoint also failed');
+        throw new Error(`Authentication failed on both endpoints. First: ${authError.message}, Second: ${altAuthError.message}`);
+      }
+    }
 
     console.log('Swychr auth response:', {
       status: authResponse.status,
+      statusText: authResponse.statusText,
       data: authResponse.data,
-      headers: authResponse.headers
+      headers: authResponse.headers,
+      endpoint: authEndpoint
     });
 
     // Handle different response formats
