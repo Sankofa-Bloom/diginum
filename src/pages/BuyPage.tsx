@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import AddFundsButton from "@/components/AddFundsButton";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -511,11 +511,7 @@ const BuyPage = () => {
             )}
           </div>
           
-          <div className="flex gap-2">
-            <AddFundsButton amount={5} />
-            <AddFundsButton amount={10} />
-            <AddFundsButton amount={20} />
-          </div>
+
         </div>
       </div>
 

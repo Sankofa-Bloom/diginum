@@ -4,7 +4,6 @@
   "description": "Netlify functions for DigiNum",
   "main": "index.js",
   "dependencies": {
-    "axios": "^1.6.0",
     "@supabase/supabase-js": "^2.38.0",
     "bcrypt": "^5.1.1"
   }
