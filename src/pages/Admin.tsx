@@ -26,7 +26,8 @@ import {
   Save,
   X,
   Plus,
-  Trash2
+  Trash2,
+  Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -312,6 +313,15 @@ const Admin = () => {
               <h1 className="text-xl font-bold">DigiNum Admin Dashboard</h1>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/add-funds')}
+                className="gap-2"
+              >
+                <Wallet className="h-4 w-4" />
+                Add Funds
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

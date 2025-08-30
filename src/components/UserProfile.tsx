@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { updateUserProfile } from '@/lib/auth';
+import { Wallet } from 'lucide-react';
 
 export default function UserProfile() {
   const { user, loading } = useCurrentUser();
@@ -142,6 +143,17 @@ export default function UserProfile() {
               Edit Profile
             </Button>
           )}
+        </div>
+        
+        <div className="pt-4 border-t">
+          <Button 
+            onClick={() => window.location.href = '/add-funds'} 
+            variant="outline" 
+            className="w-full"
+          >
+            <Wallet className="h-4 w-4 mr-2" />
+            Add Funds to Account
+          </Button>
         </div>
       </CardContent>
     </Card>

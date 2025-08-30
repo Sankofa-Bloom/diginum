@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { MessageCircle, Menu, X, User, LogOut, Home, ShoppingCart, BarChart3 } from 'lucide-react';
+import { MessageCircle, Menu, X, User, LogOut, Home, ShoppingCart, BarChart3, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { getCurrentUser, logout } from '@/lib/auth';
@@ -97,6 +97,15 @@ const Layout = () => {
               <CurrencySelector />
               {user ? (
                 <>
+                  <Button
+                    onClick={() => navigate('/add-funds')}
+                    size="sm"
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Add Funds
+                  </Button>
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
                     <User className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium text-foreground max-w-[120px] truncate">
@@ -163,7 +172,10 @@ const Layout = () => {
                       <MobileNavLink to="/" icon={Home}>Home</MobileNavLink>
                       <MobileNavLink to="/buy" icon={ShoppingCart}>Buy Numbers</MobileNavLink>
                       {user && (
-                        <MobileNavLink to="/dashboard" icon={BarChart3}>Dashboard</MobileNavLink>
+                        <>
+                          <MobileNavLink to="/dashboard" icon={BarChart3}>Dashboard</MobileNavLink>
+                          <MobileNavLink to="/add-funds" icon={Wallet}>Add Funds</MobileNavLink>
+                        </>
                       )}
                     </nav>
 

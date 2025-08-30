@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Loader2, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, DollarSign, RefreshCw, Search } from "lucide-react";
+import { Loader2, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, DollarSign, RefreshCw, Search, Wallet } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';
 import apiClient from '@/lib/apiClient';
 import CountdownTimer from '@/components/CountdownTimer';
@@ -532,7 +532,15 @@ const BuyPage = () => {
             )}
           </div>
           
-
+          <Button
+            onClick={() => navigate('/add-funds')}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Wallet className="h-4 w-4" />
+            Add Funds
+          </Button>
         </div>
       </div>
 
