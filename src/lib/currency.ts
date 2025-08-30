@@ -88,19 +88,37 @@ export class CurrencyService {
     try {
       // First try to get from backend
       const response = await apiClient.get('/exchange-rates');
-      const ratesData = response.rates || response;
+      console.log('Exchange rates API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response ? Object.keys(response) : 'null');
+      
+      // Handle different response formats
+      let ratesData = null;
+      if (response && typeof response === 'object') {
+        if (Array.isArray(response)) {
+          ratesData = response;
+        } else if (response.rates && Array.isArray(response.rates)) {
+          ratesData = response.rates;
+        } else if (response.data && Array.isArray(response.data)) {
+          ratesData = response.data;
+        }
+      }
+      
+      console.log('Processed rates data:', ratesData);
       
       if (ratesData && ratesData.length > 0) {
         // Transform API response to match ExchangeRate interface
         const rates = ratesData.map((rate: any) => ({
-          currency: rate.code || rate.currency,
-          rate: rate.rate,
+          currency: rate.code || rate.currency || 'USD',
+          rate: rate.rate || 1.0,
           vat: rate.vat || 0,
           updated_at: rate.updated_at || new Date().toISOString()
         }));
         
-        console.log('Got exchange rates from backend');
+        console.log('Transformed exchange rates:', rates);
         return rates;
+      } else {
+        console.log('No valid rates data found in response');
       }
     } catch (error) {
       console.error('Error fetching from backend:', error);
@@ -108,21 +126,21 @@ export class CurrencyService {
 
     // Try cached rates from local storage
     const cachedRates = this.getCachedRates();
-    if (cachedRates && cachedRates.length > 0) {
+    if (cachedRates && Array.isArray(cachedRates) && cachedRates.length > 0) {
       console.log('Using cached exchange rates');
       return cachedRates;
     }
 
-    // Try to update rates (this will fetch from Fixer API)
-    try {
-      await this.updateExchangeRates();
-      const updatedRates = this.getCachedRates();
-      if (updatedRates) {
-        return updatedRates;
+          // Try to update rates (this will fetch from Fixer API)
+      try {
+        await this.updateExchangeRates();
+        const updatedRates = this.getCachedRates();
+        if (updatedRates && Array.isArray(updatedRates) && updatedRates.length > 0) {
+          return updatedRates;
+        }
+      } catch (error) {
+        console.error('Error updating exchange rates:', error);
       }
-    } catch (error) {
-      console.error('Error updating exchange rates:', error);
-    }
 
     // Fallback to live API
     try {
@@ -153,6 +171,10 @@ export class CurrencyService {
       // Final fallback to hardcoded rates
       return this.getFallbackRates();
     }
+    
+    // If we get here, something went wrong - return fallback rates
+    console.log('All exchange rate methods failed, using fallback rates');
+    return this.getFallbackRates();
   }
 
   // Get VAT rate for a specific currency
