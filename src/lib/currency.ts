@@ -174,6 +174,15 @@ export class CurrencyService {
     
     // If we get here, something went wrong - return fallback rates
     console.log('All exchange rate methods failed, using fallback rates');
+    
+    // Clear any corrupted cache
+    try {
+      localStorage.removeItem('exchange_rates_cache');
+      localStorage.removeItem('exchange_rates_last_update');
+    } catch (error) {
+      console.warn('Could not clear corrupted cache:', error);
+    }
+    
     return this.getFallbackRates();
   }
 
@@ -439,9 +448,36 @@ export class CurrencyService {
   static getCachedRates(): ExchangeRate[] | null {
     try {
       const cached = localStorage.getItem('exchange_rates_cache');
-      return cached ? JSON.parse(cached) : null;
+      if (!cached) return null;
+      
+      const parsed = JSON.parse(cached);
+      
+      // Validate that cached data is an array
+      if (!Array.isArray(parsed)) {
+        console.warn('Cached rates is not an array, clearing cache');
+        localStorage.removeItem('exchange_rates_cache');
+        return null;
+      }
+      
+      // Validate each rate has required properties
+      const validRates = parsed.filter(rate => 
+        rate && 
+        typeof rate === 'object' && 
+        rate.currency && 
+        typeof rate.rate === 'number'
+      );
+      
+      if (validRates.length === 0) {
+        console.warn('No valid rates in cache, clearing cache');
+        localStorage.removeItem('exchange_rates_cache');
+        return null;
+      }
+      
+      return validRates;
     } catch (error) {
       console.error('Error getting cached rates:', error);
+      // Clear corrupted cache
+      localStorage.removeItem('exchange_rates_cache');
       return null;
     }
   }
