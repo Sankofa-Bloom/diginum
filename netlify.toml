@@ -79,6 +79,12 @@
   to = "/.netlify/functions/update-exchange-rates"
   status = 200
 
+# Swychr webhook redirect
+[[redirects]]
+  from = "/webhooks/swychr"
+  to = "/.netlify/functions/swychr-webhook"
+  status = 200
+
 # Redirect all other requests to index.html for SPA routing
 [[redirects]]
   from = "/*"

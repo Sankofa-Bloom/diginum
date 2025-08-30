@@ -22,6 +22,8 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
+import AddFunds from "./pages/AddFunds";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import { useCSRFToken } from '@/lib/csrf';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { supabase } from '@/lib/supabaseClient';
@@ -120,7 +122,18 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="add-funds" 
+          element={
+            <ProtectedRoute>
+              <AddFunds />
+            </ProtectedRoute>
+          } 
+        />
       </Route>
+      
+      {/* Payment routes */}
+      <Route path="/payment/success" element={<PaymentSuccess />} />
       
       {/* 404 Not Found */}
       <Route path="*" element={<NotFound />} />

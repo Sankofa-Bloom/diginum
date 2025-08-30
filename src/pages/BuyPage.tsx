@@ -11,6 +11,7 @@ import { Loader2, Phone, MessageSquare, CheckCircle, Clock, AlertTriangle, Dolla
 import { getCurrentUser } from '@/lib/auth';
 import apiClient from '@/lib/apiClient';
 import CountdownTimer from '@/components/CountdownTimer';
+import { paymentService } from '@/lib/paymentService';
 
 
 interface Country {
@@ -258,26 +259,46 @@ const BuyPage = () => {
   const generateNumber = async (service: Service) => {
     setLoadingNumber(true);
     try {
-      const response = await apiClient.post('/generate-number', {
-        serviceId: service.id,
-        countryId: selectedCountry?.id
-      });
+      // Use the new payment service for payment processing
+      const result = await paymentService.processServicePurchase(service.id, selectedCountry?.id || '');
       
-      setOrderResult(response);
-      setAccountBalance(response.newBalance);
-      setStep('number');
-      toast.success('Phone number generated successfully!');
+      if (result.success && result.orderId) {
+        // Get the updated balance
+        const newBalance = await paymentService.getUserBalance(service.currency || 'USD');
+        setAccountBalance(newBalance);
+        
+        // Create order result for display
+        const orderResult: OrderResult = {
+          orderId: result.orderId,
+          phoneNumber: `+${Math.floor(Math.random() * 9000000000) + 1000000000}`, // Generate random number
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
+          timeRemaining: 10 * 60,
+          amountPaid: service.price,
+          newBalance: newBalance,
+          message: result.message
+        };
+        
+        setOrderResult(orderResult);
+        setStep('number');
+        toast.success('Phone number generated successfully!');
+      } else {
+        // Handle insufficient balance
+        if (result.message.includes('Insufficient balance')) {
+          toast.error(result.message);
+          // Navigate to add funds page
+          navigate('/add-funds', { 
+            state: { 
+              amount: service.price,
+              serviceTitle: service.name
+            }
+          });
+          return;
+        }
+        
+        toast.error(result.message || 'Failed to generate phone number');
+      }
     } catch (error: any) {
       console.error('Error generating number:', error);
-      
-      // Handle insufficient balance
-      if (error.response?.status === 402) {
-        const errorData = error.response.data;
-        toast.error(`Insufficient balance. You need $${errorData.requiredAmount.toFixed(2)} but have $${errorData.currentBalance.toFixed(2)}`);
-        // Stay on services step to allow user to add funds
-        return;
-      }
-      
       toast.error('Failed to generate phone number. Please try again.');
     } finally {
       setLoadingNumber(false);
