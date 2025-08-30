@@ -264,7 +264,7 @@ const BuyPage = () => {
       
       if (result.success && result.orderId) {
         // Get the updated balance
-        const newBalance = await paymentService.getUserBalance(service.currency || 'USD');
+        const newBalance = await paymentService.getUserBalance();
         setAccountBalance(newBalance);
         
         // Create order result for display

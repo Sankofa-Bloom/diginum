@@ -39,7 +39,6 @@ const AddFunds = () => {
 
   // Form states
   const [amount, setAmount] = useState(state?.amount || 10);
-  const [currency, setCurrency] = useState('USD');
   const [countryCode, setCountryCode] = useState('US');
   const [description, setDescription] = useState('');
   
@@ -92,7 +91,7 @@ const AddFunds = () => {
 
   const loadUserBalance = async () => {
     try {
-      const balance = await paymentService.getUserBalance(currency);
+      const balance = await paymentService.getUserBalance();
       setCurrentBalance(balance);
     } catch (error) {
       console.error('Failed to load balance:', error);
@@ -131,9 +130,8 @@ const AddFunds = () => {
     try {
       const response = await paymentService.addFunds({
         amount,
-        currency,
         country_code: countryCode,
-        description: description || `Add funds - ${amount} ${currency}`
+        description: description || `Add funds - ${amount} USD`
       });
 
       if (response.success) {
@@ -164,25 +162,10 @@ const AddFunds = () => {
     setPaymentUrl('');
   };
 
-  const handleCurrencyChange = (newCurrency: string) => {
-    setCurrency(newCurrency);
-    loadUserBalance();
-  };
+
 
   const handleCountryChange = (newCountry: string) => {
     setCountryCode(newCountry);
-    // You could also update currency based on country
-    if (newCountry === 'CM') {
-      setCurrency('XAF');
-    } else if (newCountry === 'NG') {
-      setCurrency('NGN');
-    } else if (newCountry === 'GH') {
-      setCurrency('GHS');
-    } else if (newCountry === 'KE') {
-      setCurrency('KES');
-    } else if (newCountry === 'US') {
-      setCurrency('USD');
-    }
   };
 
   const getCountryFlag = (countryCode: string) => {
@@ -331,7 +314,7 @@ const AddFunds = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-primary">
-                {currentBalance.toFixed(2)} {currency}
+                ${currentBalance.toFixed(2)} USD
               </div>
               <p className="text-muted-foreground mt-2">
                 Available for purchasing services
@@ -348,7 +331,7 @@ const AddFunds = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="country">Country</Label>
                   <Select value={countryCode} onValueChange={handleCountryChange}>
@@ -381,21 +364,7 @@ const AddFunds = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select value={currency} onValueChange={handleCurrencyChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {paymentService.getSupportedCurrencies().map((curr) => (
-                        <SelectItem key={curr} value={curr}>
-                          {curr}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+
               </div>
 
               <div className="space-y-2">

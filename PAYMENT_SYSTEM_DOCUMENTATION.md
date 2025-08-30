@@ -73,7 +73,7 @@ const statusRequest = {
 
 ### **Features**
 - **Country Selection**: 20+ supported countries with flags
-- **Currency Support**: 20+ currencies including African currencies
+- **Currency Support**: USD only for simplified operations
 - **Amount Flexibility**: User-defined payment amounts
 - **Real-time Processing**: Instant payment link creation
 - **Transaction History**: Complete payment records
@@ -83,9 +83,7 @@ const statusRequest = {
 - **Global**: US, GB, EU, CA, AU, IN, CN, JP, BR, MX
 
 ### **Supported Currencies**
-- **Major**: USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY
-- **African**: XAF (Cameroon), NGN (Nigeria), GHS (Ghana), KES (Kenya), XOF (West Africa), UGX (Uganda), TZS (Tanzania)
-- **Others**: INR, BRL, MXN, ZAR, EGP
+- **USD Only**: All transactions processed in US Dollars for consistency and simplicity
 
 ## 📊 Transaction Processing
 
@@ -127,12 +125,11 @@ CREATE TABLE transactions (
 
 ### **Add Funds Flow**
 1. **Select Country**: Choose from supported countries with flags
-2. **Enter Amount**: Specify payment amount
-3. **Choose Currency**: Select appropriate currency
-4. **Add Description**: Optional transaction note
-5. **Create Payment**: Generate payment link
-6. **Complete Payment**: Redirect to payment page
-7. **Confirmation**: Payment success/verification
+2. **Enter Amount**: Specify payment amount in USD
+3. **Add Description**: Optional transaction note
+4. **Create Payment**: Generate payment link
+5. **Complete Payment**: Redirect to payment page
+6. **Confirmation**: Payment success/verification
 
 ### **Transaction History**
 - **Real-time Updates**: Live transaction status
@@ -196,7 +193,6 @@ import { paymentService } from '@/lib/paymentService';
 
 const response = await paymentService.addFunds({
   amount: 100,
-  currency: 'USD',
   country_code: 'US',
   description: 'Add funds to account'
 });
@@ -237,10 +233,10 @@ console.log('Payment status:', status.payment_status);
 6. Test payment status checking
 
 ### **Test Different Countries**
-- **Cameroon**: XAF currency, country code CM
-- **Nigeria**: NGN currency, country code NG
-- **Ghana**: GHS currency, country code GH
-- **United States**: USD currency, country code US
+- **Cameroon**: Country code CM (USD payments)
+- **Nigeria**: Country code NG (USD payments)
+- **Ghana**: Country code GH (USD payments)
+- **United States**: Country code US (USD payments)
 
 ## 📈 Monitoring & Analytics
 

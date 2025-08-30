@@ -51,7 +51,6 @@ export interface Transaction {
 
 export interface AddFundsRequest {
   amount: number;
-  currency: string;
   country_code: string;
   description?: string;
 }
@@ -238,10 +237,10 @@ export class PaymentService {
           user_id: user.id,
           type: 'deposit',
           amount: request.amount,
-          currency: request.currency,
+          currency: 'USD',
           status: 'pending',
           reference,
-          description: request.description || `Add funds - ${request.amount} ${request.currency}`,
+          description: request.description || `Add funds - ${request.amount} USD`,
           transaction_id: transactionId,
           country_code: request.country_code,
           customer_name: user.user_metadata?.full_name || user.email || 'User',
@@ -264,7 +263,7 @@ export class PaymentService {
         mobile: user.phone || undefined,
         amount: Math.round(request.amount * 100), // Convert to smallest currency unit
         transaction_id: transactionId,
-        description: `Add funds to DigiNum account - ${request.amount} ${request.currency}`,
+        description: `Add funds to DigiNum account - ${request.amount} USD`,
         pass_digital_charge: false
       };
 
@@ -337,7 +336,7 @@ export class PaymentService {
         .from('user_balances')
         .select('balance')
         .eq('user_id', user.id)
-        .eq('currency', service.currency)
+        .eq('currency', 'USD')
         .single();
 
       if (balanceError || !balance) {
@@ -345,7 +344,7 @@ export class PaymentService {
       }
 
       if (balance.balance < service.app_price) {
-        throw new Error(`Insufficient balance. Required: ${service.app_price} ${service.currency}, Available: ${balance.balance} ${service.currency}`);
+        throw new Error(`Insufficient balance. Required: $${service.app_price} USD, Available: $${balance.balance} USD`);
       }
 
       // Create order
@@ -356,7 +355,7 @@ export class PaymentService {
           service_id: serviceId,
           country_id: countryId,
           amount: service.app_price,
-          currency: service.currency,
+          currency: 'USD',
           status: 'pending',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
@@ -377,7 +376,7 @@ export class PaymentService {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
-        .eq('currency', service.currency);
+        .eq('currency', 'USD');
 
       if (updateBalanceError) {
         throw new Error(`Failed to update balance: ${updateBalanceError.message}`);
@@ -390,7 +389,7 @@ export class PaymentService {
           user_id: user.id,
           type: 'purchase',
           amount: service.app_price,
-          currency: service.currency,
+          currency: 'USD',
           status: 'completed',
           reference: `PUR_${order.id}`,
           description: `Service purchase: ${service.name}`,
@@ -471,7 +470,7 @@ export class PaymentService {
   /**
    * Get user balance
    */
-  async getUserBalance(currency: string = 'USD'): Promise<number> {
+  async getUserBalance(): Promise<number> {
     try {
       const user = await getCurrentUser();
       if (!user) {
@@ -482,7 +481,7 @@ export class PaymentService {
         .from('user_balances')
         .select('balance')
         .eq('user_id', user.id)
-        .eq('currency', currency)
+        .eq('currency', 'USD')
         .single();
 
       if (error || !balance) {
@@ -651,31 +650,10 @@ export class PaymentService {
   }
 
   /**
-   * Get supported currencies
+   * Get supported currencies (USD only)
    */
   getSupportedCurrencies(): string[] {
-    return [
-      'USD', // US Dollar
-      'EUR', // Euro
-      'GBP', // British Pound
-      'XAF', // Central African CFA franc
-      'NGN', // Nigerian Naira
-      'GHS', // Ghanaian Cedi
-      'KES', // Kenyan Shilling
-      'XOF', // West African CFA franc
-      'UGX', // Ugandan Shilling
-      'TZS', // Tanzanian Shilling
-      'JPY', // Japanese Yen
-      'CAD', // Canadian Dollar
-      'AUD', // Australian Dollar
-      'CHF', // Swiss Franc
-      'CNY', // Chinese Yuan
-      'INR', // Indian Rupee
-      'BRL', // Brazilian Real
-      'MXN', // Mexican Peso
-      'ZAR', // South African Rand
-      'EGP'  // Egyptian Pound
-    ];
+    return ['USD']; // US Dollar only
   }
 }
 

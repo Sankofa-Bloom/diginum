@@ -48,13 +48,12 @@ const PaymentSuccess = () => {
         if (verification.success) {
           if (verification.payment_status === 'completed') {
             setVerificationStatus('success');
-            setTransactionDetails({
-              transactionId,
-              reference: reference || `TXN_${transactionId}`,
-              amount: 0, // Will be updated from transaction
-              currency: 'USD',
-              status: 'completed'
-            });
+                         setTransactionDetails({
+               transactionId,
+               reference: reference || `TXN_${transactionId}`,
+               amount: 0, // Will be updated from transaction
+               status: 'completed'
+             });
           } else if (verification.payment_status === 'failed') {
             setVerificationStatus('failed');
           } else {
@@ -67,13 +66,12 @@ const PaymentSuccess = () => {
         // For reference-based verification, we'll simulate success
         // In a real implementation, you'd query by reference
         setVerificationStatus('success');
-        setTransactionDetails({
-          transactionId: 'N/A',
-          reference,
-          amount: 0,
-          currency: 'USD',
-          status: 'success'
-        });
+               setTransactionDetails({
+         transactionId: 'N/A',
+         reference,
+         amount: 0,
+         status: 'success'
+       });
       }
     } catch (error) {
       console.error('Payment verification error:', error);
@@ -202,14 +200,14 @@ const PaymentSuccess = () => {
                     <p className="font-medium">{transactionDetails.transactionId}</p>
                   </div>
                 )}
-                {transactionDetails.amount > 0 && (
-                  <div>
-                    <span className="text-gray-600">Amount:</span>
-                    <p className="font-medium">
-                      {transactionDetails.amount.toFixed(2)} {transactionDetails.currency}
-                    </p>
-                  </div>
-                )}
+                                 {transactionDetails.amount > 0 && (
+                   <div>
+                     <span className="text-gray-600">Amount:</span>
+                     <p className="font-medium">
+                       ${transactionDetails.amount.toFixed(2)} USD
+                     </p>
+                   </div>
+                 )}
               </div>
             </div>
           )}
