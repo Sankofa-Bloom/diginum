@@ -21,17 +21,20 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';
 import { paymentService, CountryCurrencyInfo } from '@/lib/paymentService';
+import apiClient from '@/lib/apiClient';
+
+interface Country {
+  id: string;
+  name: string;
+  code: string;
+}
 
 interface Service {
-  id: number;
+  id: string;
   name: string;
   description: string;
-  app_price: number;
-  api_price: number;
-  markup_amount: number;
-  markup_percentage: number;
-  currency: string;
-  country_id: string;
+  price: number;
+  countryId: string;
   available: boolean;
 }
 
@@ -52,7 +55,7 @@ const Buy = () => {
   
   // Flow states
   const [step, setStep] = useState<'countries' | 'services' | 'number' | 'verification'>('countries');
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [orderResult, setOrderResult] = useState<OrderResult | null>(null);
   
@@ -61,52 +64,17 @@ const Buy = () => {
   const [loadingBalance, setLoadingBalance] = useState(false);
   
   // Loading states
+  const [loadingCountries, setLoadingCountries] = useState(false);
   const [loadingServices, setLoadingServices] = useState(false);
   const [loadingNumber, setLoadingNumber] = useState(false);
   
   // Search states
   const [serviceSearch, setServiceSearch] = useState('');
   
-  // Services data
+  // Data states
+  const [countries, setCountries] = useState<Country[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   
-  // Mock services data based on database setup
-  const mockServices: Service[] = [
-    // Cameroon Services (25% markup)
-    { id: 1, name: 'MTN Mobile Money', description: 'MTN Mobile Money service for Cameroon', app_price: 10.00, api_price: 8.00, markup_amount: 2.00, markup_percentage: 0.25, currency: 'USD', country_id: 'CM', available: true },
-    { id: 2, name: 'Orange Money', description: 'Orange Money service for Cameroon', app_price: 10.00, api_price: 8.00, markup_amount: 2.00, markup_percentage: 0.25, currency: 'USD', country_id: 'CM', available: true },
-    { id: 3, name: 'Express Union', description: 'Express Union service for Cameroon', app_price: 12.00, api_price: 9.60, markup_amount: 2.40, markup_percentage: 0.25, currency: 'USD', country_id: 'CM', available: true },
-    
-    // Nigeria Services (30% markup)
-    { id: 4, name: 'Airtel Money', description: 'Airtel Money service for Nigeria', app_price: 15.00, api_price: 11.54, markup_amount: 3.46, markup_percentage: 0.30, currency: 'USD', country_id: 'NG', available: true },
-    { id: 5, name: 'Paga', description: 'Paga service for Nigeria', app_price: 18.00, api_price: 13.85, markup_amount: 4.15, markup_percentage: 0.30, currency: 'USD', country_id: 'NG', available: true },
-    { id: 6, name: 'OPay', description: 'OPay service for Nigeria', app_price: 16.00, api_price: 12.31, markup_amount: 3.69, markup_percentage: 0.30, currency: 'USD', country_id: 'NG', available: true },
-    
-    // Ghana Services (28% markup)
-    { id: 7, name: 'Momo', description: 'MTN Mobile Money service for Ghana', app_price: 14.00, api_price: 10.94, markup_amount: 3.06, markup_percentage: 0.28, currency: 'USD', country_id: 'GH', available: true },
-    { id: 8, name: 'Vodafone Cash', description: 'Vodafone Cash service for Ghana', app_price: 13.00, api_price: 10.16, markup_amount: 2.84, markup_percentage: 0.28, currency: 'USD', country_id: 'GH', available: true },
-    
-    // Kenya Services (25% markup)
-    { id: 9, name: 'M-Pesa', description: 'M-Pesa service for Kenya', app_price: 12.00, api_price: 9.60, markup_amount: 2.40, markup_percentage: 0.25, currency: 'USD', country_id: 'KE', available: true },
-    { id: 10, name: 'Airtel Money KE', description: 'Airtel Money service for Kenya', app_price: 11.00, api_price: 8.80, markup_amount: 2.20, markup_percentage: 0.25, currency: 'USD', country_id: 'KE', available: true },
-    
-    // Senegal Services (26% markup)
-    { id: 11, name: 'Wave', description: 'Wave service for Senegal', app_price: 13.00, api_price: 10.32, markup_amount: 2.68, markup_percentage: 0.26, currency: 'USD', country_id: 'SN', available: true },
-    { id: 12, name: 'Orange Money SN', description: 'Orange Money service for Senegal', app_price: 12.00, api_price: 9.52, markup_amount: 2.48, markup_percentage: 0.26, currency: 'USD', country_id: 'SN', available: true },
-    
-    // Ivory Coast Services (24% markup)
-    { id: 13, name: 'Moov Money', description: 'Moov Money service for Ivory Coast', app_price: 11.00, api_price: 8.87, markup_amount: 2.13, markup_percentage: 0.24, currency: 'USD', country_id: 'CI', available: true },
-    { id: 14, name: 'Orange Money CI', description: 'Orange Money service for Ivory Coast', app_price: 12.00, api_price: 9.68, markup_amount: 2.32, markup_percentage: 0.24, currency: 'USD', country_id: 'CI', available: true },
-    
-    // Uganda Services (22% markup)
-    { id: 15, name: 'M-Pesa UG', description: 'M-Pesa service for Uganda', app_price: 10.00, api_price: 8.20, markup_amount: 1.80, markup_percentage: 0.22, currency: 'USD', country_id: 'UG', available: true },
-    { id: 16, name: 'Airtel Money UG', description: 'Airtel Money service for Uganda', app_price: 9.00, api_price: 7.38, markup_amount: 1.62, markup_percentage: 0.22, currency: 'USD', country_id: 'UG', available: true },
-    
-    // Tanzania Services (23% markup)
-    { id: 17, name: 'M-Pesa TZ', description: 'M-Pesa service for Tanzania', app_price: 11.00, api_price: 8.94, markup_amount: 2.06, markup_percentage: 0.23, currency: 'USD', country_id: 'TZ', available: true },
-    { id: 18, name: 'Tigo Pesa', description: 'Tigo Pesa service for Tanzania', app_price: 10.00, api_price: 8.13, markup_amount: 1.87, markup_percentage: 0.23, currency: 'USD', country_id: 'TZ', available: true }
-  ];
-
   // Filtered services based on selected country
   const filteredServices = services.filter(service => 
     serviceSearch.trim() === '' || 
@@ -148,25 +116,50 @@ const Buy = () => {
     }
   };
 
-  const handleCountrySelect = (countryCode: string) => {
+  const loadCountries = async () => {
+    setLoadingCountries(true);
+    try {
+      const response = await apiClient.get('/countries');
+      setCountries(response);
+    } catch (error) {
+      console.error('Failed to load countries:', error);
+      toast.error('Failed to load countries. Please try again.');
+    } finally {
+      setLoadingCountries(false);
+    }
+  };
+
+  const loadServices = async (countryId: string) => {
+    setLoadingServices(true);
+    try {
+      const response = await apiClient.get(`/services/${countryId}`);
+      setServices(response);
+      setStep('services');
+    } catch (error) {
+      console.error('Failed to load services:', error);
+      toast.error('Failed to load services. Please try again.');
+    } finally {
+      setLoadingServices(false);
+    }
+  };
+
+  const handleCountrySelect = (country: Country) => {
     if (!isAuthenticated) {
       toast.error('Please log in to continue with your purchase.');
       navigate('/login', { state: { from: '/buy' } });
       return;
     }
     
-    setSelectedCountry(countryCode);
-    const countryServices = mockServices.filter(service => service.country_id === countryCode);
-    setServices(countryServices);
-    setStep('services');
+    setSelectedCountry(country);
+    loadServices(country.id);
   };
 
   const handleServiceSelect = (service: Service) => {
-    if (accountBalance < service.app_price) {
+    if (accountBalance < service.price) {
       toast.error('Insufficient balance. Please add funds to continue.');
       navigate('/add-funds', { 
         state: { 
-          amount: service.app_price,
+          amount: service.price,
           serviceTitle: service.name
         }
       });
@@ -181,7 +174,7 @@ const Buy = () => {
     setLoadingNumber(true);
     try {
       // Use the payment service for payment processing
-      const result = await paymentService.processServicePurchase(service.id, selectedCountry);
+      const result = await paymentService.processServicePurchase(parseInt(service.id), selectedCountry?.id || '');
       
       if (result.success && result.orderId) {
         // Get the updated balance
@@ -194,7 +187,7 @@ const Buy = () => {
           phoneNumber: `+${Math.floor(Math.random() * 9000000000) + 1000000000}`, // Generate random number
           expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
           timeRemaining: 10 * 60,
-          amountPaid: service.app_price,
+          amountPaid: service.price,
           newBalance: newBalance,
           message: result.message
         };
@@ -215,40 +208,19 @@ const Buy = () => {
 
   const resetFlow = () => {
     setStep('countries');
-    setSelectedCountry('');
+    setSelectedCountry(null);
     setSelectedService(null);
     setOrderResult(null);
     setServiceSearch('');
     setServices([]);
   };
 
-  const getCountryFlag = (countryCode: string) => {
-    const countryNames: Record<string, string> = {
-      'CM': '🇨🇲',
-      'NG': '🇳🇬',
-      'GH': '🇬🇭',
-      'KE': '🇰🇪',
-      'SN': '🇸🇳',
-      'CI': '🇨🇮',
-      'UG': '🇺🇬',
-      'TZ': '🇹🇿'
-    };
-    return countryNames[countryCode] || countryCode;
-  };
-
-  const getCountryName = (countryCode: string) => {
-    const countryNames: Record<string, string> = {
-      'CM': 'Cameroon',
-      'NG': 'Nigeria',
-      'GH': 'Ghana',
-      'KE': 'Kenya',
-      'SN': 'Senegal',
-      'CI': 'Ivory Coast',
-      'UG': 'Uganda',
-      'TZ': 'Tanzania'
-    };
-    return countryNames[countryCode] || countryCode;
-  };
+  // Load countries when component mounts
+  useEffect(() => {
+    if (step === 'countries') {
+      loadCountries();
+    }
+  }, [step]);
 
   if (isLoading) {
     return (
@@ -294,15 +266,22 @@ const Buy = () => {
 
         {/* Countries Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {paymentService.getSupportedCountries().map((countryCode) => (
-            <Card key={countryCode} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardContent className="p-4 text-center">
-                <div className="text-4xl mb-2">{getCountryFlag(countryCode)}</div>
-                <h3 className="font-semibold">{getCountryName(countryCode)}</h3>
-                <p className="text-sm text-muted-foreground">{countryCode}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {loadingCountries ? (
+            <div className="col-span-full flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin mr-2" />
+              Loading countries...
+            </div>
+          ) : (
+            countries.map((country) => (
+              <Card key={country.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl mb-2">📞</div>
+                  <h3 className="font-semibold">{country.name}</h3>
+                  <p className="text-sm text-muted-foreground">{country.code}</p>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </div>
     );
@@ -403,21 +382,34 @@ const Buy = () => {
             <CardDescription>Choose a country to get a phone number from</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {paymentService.getSupportedCountries().map((countryCode) => (
-                <Card 
-                  key={countryCode} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleCountrySelect(countryCode)}
-                >
-                  <CardContent className="p-4 text-center">
-                    <div className="text-4xl mb-2">{getCountryFlag(countryCode)}</div>
-                    <h3 className="font-semibold">{getCountryName(countryCode)}</h3>
-                    <p className="text-sm text-muted-foreground">{countryCode}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {loadingCountries ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                Loading countries...
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {countries.map((country) => (
+                  <Card 
+                    key={country.id} 
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleCountrySelect(country)}
+                  >
+                    <CardContent className="p-4 text-center">
+                      <div className="text-2xl mb-2">📞</div>
+                      <h3 className="font-semibold">{country.name}</h3>
+                      <p className="text-sm text-muted-foreground">{country.code}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+            
+            {!loadingCountries && countries.length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No countries available at the moment.
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -431,7 +423,7 @@ const Buy = () => {
               Select Service
             </CardTitle>
             <CardDescription>
-              Choose a service for {getCountryName(selectedCountry)} ({getCountryFlag(selectedCountry)} {selectedCountry})
+              Choose a service for {selectedCountry.name} ({selectedCountry.code})
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -457,27 +449,19 @@ const Buy = () => {
                   <Card 
                     key={service.id} 
                     className={`cursor-pointer hover:shadow-md transition-shadow ${
-                      accountBalance < service.app_price ? 'opacity-50' : ''
+                      accountBalance < service.price ? 'opacity-50' : ''
                     }`}
-                    onClick={() => accountBalance >= service.app_price && handleServiceSelect(service)}
+                    onClick={() => accountBalance >= service.price && handleServiceSelect(service)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-semibold">{service.name}</h3>
                           <p className="text-sm text-muted-foreground">{service.description}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {Math.round(service.markup_percentage * 100)}% markup
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              API: ${service.api_price}
-                            </Badge>
-                          </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-lg">${service.app_price}</p>
-                          {accountBalance < service.app_price ? (
+                          <p className="font-bold text-lg">${service.price}</p>
+                          {accountBalance < service.price ? (
                             <Badge variant="destructive">Insufficient Balance</Badge>
                           ) : (
                             <Badge variant="secondary">Available</Badge>
