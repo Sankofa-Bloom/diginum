@@ -67,15 +67,15 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# Payment function redirects - these should match the function directory structure
+# Payment function redirects - using exact function names
 [[redirects]]
   from = "/api/payments/create-link"
-  to = "/.netlify/functions/payments/create-link"
+  to = "/.netlify/functions/api-payments-create-link"
   status = 200
 
 [[redirects]]
   from = "/api/payments/status"
-  to = "/.netlify/functions/payments/status"
+  to = "/.netlify/functions/api-payments-status"
   status = 200
 
 # Test payment function
