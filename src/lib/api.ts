@@ -155,13 +155,7 @@ export const updateAdminSystemSettings = async (settings: {
   return response;
 };
 
-export const updateExchangeRate = async (currency: string, data: {
-  rate: number;
-  markup?: number;
-}) => {
-  const response = await apiClient.put(`/admin/exchange-rates/${currency}`, data);
-  return response;
-};
+
 
 export const updatePriceAdjustment = async (id: string, data: {
   markup: number;
@@ -175,10 +169,7 @@ export const fetchAdminRecentTransactions = async (limit: number = 50) => {
   return response;
 };
 
-export const fetchAdminExchangeRates = async () => {
-  const response = await apiClient.get('/admin/exchange-rates');
-  return response;
-};
+
 
 export const fetchAdminPriceAdjustments = async () => {
   const response = await apiClient.get('/admin/price-adjustments');

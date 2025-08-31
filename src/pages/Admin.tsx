@@ -64,10 +64,8 @@ import {
   fetchAdminDashboardStats,
   fetchAdminSystemSettings,
   updateAdminSystemSettings,
-  updateExchangeRate,
   updatePriceAdjustment,
   fetchAdminRecentTransactions,
-  fetchAdminExchangeRates,
   fetchAdminPriceAdjustments
 } from '@/lib/api';
 
@@ -90,13 +88,7 @@ interface SystemSettings {
   environment: string;
 }
 
-interface ExchangeRate {
-  id: string;
-  currency: string;
-  rate: number;
-  markup: number;
-  updated_at: string;
-}
+
 
 interface PriceAdjustment {
   id: string;
@@ -127,7 +119,7 @@ const Admin = () => {
   // Dashboard Stats
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
-  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>([]);
+
   const [priceAdjustments, setPriceAdjustments] = useState<PriceAdjustment[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
 
@@ -136,10 +128,7 @@ const Admin = () => {
   const [newDefaultMarkup, setNewDefaultMarkup] = useState('');
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
-  // Exchange rate editing
-  const [editingRate, setEditingRate] = useState<string | null>(null);
-  const [editingRateValue, setEditingRateValue] = useState('');
-  const [editingMarkup, setEditingMarkup] = useState('');
+
 
   // Price adjustment editing
   const [editingPriceAdjustment, setEditingPriceAdjustment] = useState<string | null>(null);
@@ -170,17 +159,15 @@ const Admin = () => {
     
     const loadDashboardData = async () => {
       try {
-        const [statsData, settingsData, ratesData, adjustmentsData, transactionsData] = await Promise.all([
+        const [statsData, settingsData, adjustmentsData, transactionsData] = await Promise.all([
           fetchAdminDashboardStats(),
           fetchAdminSystemSettings(),
-          fetchAdminExchangeRates(),
           fetchAdminPriceAdjustments(),
           fetchAdminRecentTransactions(20)
         ]);
 
         setStats(statsData);
         setSystemSettings(settingsData);
-        setExchangeRates(ratesData);
         setPriceAdjustments(adjustmentsData);
         setRecentTransactions(transactionsData);
       } catch (error) {
@@ -216,26 +203,7 @@ const Admin = () => {
     }
   };
 
-  const handleUpdateExchangeRate = async (currency: string) => {
-    try {
-      await updateExchangeRate(currency, {
-        rate: parseFloat(editingRateValue),
-        markup: parseFloat(editingMarkup)
-      });
-      
-      toast.success(`Exchange rate for ${currency} updated successfully`);
-      setEditingRate(null);
-      setEditingRateValue('');
-      setEditingMarkup('');
-      
-      // Reload exchange rates
-      const ratesData = await fetchAdminExchangeRates();
-      setExchangeRates(ratesData);
-    } catch (error) {
-      console.error('Error updating exchange rate:', error);
-      toast.error('Failed to update exchange rate');
-    }
-  };
+
 
   const handleUpdatePriceAdjustment = async (id: string) => {
     try {
@@ -346,10 +314,7 @@ const Admin = () => {
               <Activity className="h-4 w-4" />
               Transactions
             </TabsTrigger>
-            <TabsTrigger value="exchange-rates" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Exchange Rates
-            </TabsTrigger>
+
             <TabsTrigger value="pricing" className="flex items-center gap-2">
               <DollarSign className="h-4 w-4" />
               Pricing
@@ -496,101 +461,8 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Exchange Rates Tab */}
-          <TabsContent value="exchange-rates" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
-                  Exchange Rates Management
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Currency</TableHead>
-                      <TableHead>Rate (1 USD = X)</TableHead>
-                      <TableHead>Markup (%)</TableHead>
-                      <TableHead>Last Updated</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {exchangeRates.map((rate) => (
-                      <TableRow key={rate.id}>
-                        <TableCell className="font-medium">{rate.currency}</TableCell>
-                        <TableCell>
-                          {editingRate === rate.currency ? (
-                            <Input
-                              type="number"
-                              step="0.000001"
-                              value={editingRateValue}
-                              onChange={(e) => setEditingRateValue(e.target.value)}
-                              className="w-24"
-                            />
-                          ) : (
-                            rate.rate.toFixed(6)
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {editingRate === rate.currency ? (
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={editingMarkup}
-                              onChange={(e) => setEditingMarkup(e.target.value)}
-                              className="w-20"
-                            />
-                          ) : (
-                            `${rate.markup}%`
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {new Date(rate.updated_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {editingRate === rate.currency ? (
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleUpdateExchangeRate(rate.currency)}
-                              >
-                                <Save className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setEditingRate(null);
-                                  setEditingRateValue('');
-                                  setEditingMarkup('');
-                                }}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setEditingRate(rate.currency);
-                                setEditingRateValue(rate.rate.toString());
-                                setEditingMarkup(rate.markup.toString());
-                              }}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+
+
 
           {/* Pricing Tab */}
           <TabsContent value="pricing" className="space-y-6">
