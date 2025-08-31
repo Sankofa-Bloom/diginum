@@ -8,7 +8,7 @@ import { LanguageProvider } from "./contexts/LanguageContext";
 
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
-import BuyPage from "./pages/BuyPage";
+import Buy from "./pages/Buy";
 
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
@@ -22,6 +22,8 @@ import VerifyEmail from "./pages/VerifyEmail";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Support from "./pages/Support";
+import AddFunds from "./pages/AddFunds";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import { useCSRFToken } from '@/lib/csrf';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { supabase } from '@/lib/supabaseClient';
@@ -99,7 +101,7 @@ function AppRoutes() {
           path="buy" 
           element={
             <ProtectedRoute>
-              <BuyPage />
+              <Buy />
             </ProtectedRoute>
           } 
         />
@@ -120,7 +122,18 @@ function AppRoutes() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="add-funds" 
+          element={
+            <ProtectedRoute>
+              <AddFunds />
+            </ProtectedRoute>
+          } 
+        />
       </Route>
+      
+      {/* Payment routes */}
+      <Route path="/payment/success" element={<PaymentSuccess />} />
       
       {/* 404 Not Found */}
       <Route path="*" element={<NotFound />} />

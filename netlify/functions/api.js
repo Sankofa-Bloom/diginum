@@ -1,5 +1,34 @@
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
+const axios = require('axios'); // Added axios for AccountPe API calls
+
+// Function to get authentication token from AccountPe
+async function getAuthToken() {
+  try {
+    const authResponse = await axios.post(
+      'https://api.accountpe.com/api/payin/admin/auth',
+      {
+        email: process.env.ACCOUNTPE_EMAIL,
+        password: process.env.ACCOUNTPE_PASSWORD
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    );
+
+    if (authResponse.data && authResponse.data.token) {
+      return authResponse.data.token;
+    } else {
+      throw new Error('No token received from authentication');
+    }
+  } catch (error) {
+    console.error('Authentication error:', error.response?.data || error.message);
+    throw new Error(`Authentication failed: ${error.response?.data?.message || error.message}`);
+  }
+}
 
 // Initialize Supabase clients
 // - supabase: for auth (uses anon key)
@@ -678,6 +707,346 @@ exports.handler = async (event, context) => {
     }
 
 
+
+    // Payment endpoints
+    if (endpoint === 'payments') {
+      const paymentEndpoint = pathParts[1];
+      
+      console.log('Payment endpoint reached:', { endpoint, paymentEndpoint, pathParts, httpMethod });
+
+      // Create payment link
+      if (paymentEndpoint === 'create-link' && httpMethod === 'POST') {
+        console.log('Create payment link endpoint reached');
+        try {
+          // Validate required fields based on AccountPe API requirements
+          const { country_code, name, email, amount, transaction_id, description, pass_digital_charge } = requestBody;
+          
+          if (!country_code || !name || !email || !amount || !transaction_id) {
+            return {
+              statusCode: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                success: false,
+                message: 'Missing required fields: country_code, name, email, amount, transaction_id'
+              })
+            };
+          }
+
+          // Prepare request for AccountPe API
+          const accountPeRequest = {
+            country_code,
+            name,
+            email,
+            mobile: requestBody.mobile || '',
+            amount: Math.round(amount), // Ensure amount is an integer
+            transaction_id,
+            description: description || `Payment for transaction ${transaction_id}`,
+            pass_digital_charge: pass_digital_charge || false
+          };
+
+          console.log('Creating payment link with AccountPe API:', accountPeRequest);
+
+          try {
+            // Get authentication token
+            const accountPeToken = await getAuthToken();
+
+            // Call AccountPe API to create payment link
+            const accountPeResponse = await axios.post(
+              'https://api.accountpe.com/api/payin/create_payment_links',
+              accountPeRequest,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${accountPeToken}`
+                },
+                timeout: 30000 // 30 second timeout
+              }
+            );
+
+            console.log('AccountPe API response:', accountPeResponse.data);
+
+            if (accountPeResponse.data && accountPeResponse.data.status === 200) {
+              return {
+                statusCode: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  success: true,
+                  data: {
+                    payment_url: accountPeResponse.data.data?.payment_url || accountPeResponse.data.data?.url,
+                    transaction_id: transaction_id,
+                    status: 'pending'
+                  },
+                  status: accountPeResponse.data.status,
+                  message: accountPeResponse.data.message || 'Payment link created successfully'
+                })
+              };
+            } else {
+              return {
+                statusCode: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  success: false,
+                  message: accountPeResponse.data?.message || 'Failed to create payment link',
+                  status: accountPeResponse.data?.status || 400
+                })
+              };
+            }
+
+          } catch (apiError) {
+            console.error('AccountPe API error:', apiError.response?.data || apiError.message);
+            
+            // If AccountPe API is not available, fall back to mock response for development
+            if (process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true') {
+              console.log('Falling back to mock response for development/testing');
+              
+              const mockPaymentUrl = `https://payment.accountpe.com/pay/${transaction_id}`;
+              const mockResponse = {
+                success: true,
+                data: {
+                  payment_url: mockPaymentUrl,
+                  transaction_id: transaction_id,
+                  status: 'pending'
+                },
+                status: 200,
+                message: 'Payment link created successfully (mock)'
+              };
+
+              return {
+                statusCode: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify(mockResponse)
+              };
+            }
+
+            return {
+              statusCode: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                success: false,
+                message: 'Payment service temporarily unavailable',
+                error: apiError.response?.data?.message || apiError.message
+              })
+            };
+          }
+
+        } catch (error) {
+          console.error('Error creating payment link:', error);
+          
+          return {
+            statusCode: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              success: false,
+              message: 'Internal server error',
+              error: error.message
+            })
+          };
+        }
+      }
+
+      // Check payment status
+      if (paymentEndpoint === 'status' && httpMethod === 'POST') {
+        console.log('Check payment status endpoint reached'); // Debugging
+        
+        try {
+          const requestBody = JSON.parse(event.body);
+          const { transaction_id } = requestBody;
+          
+          if (!transaction_id) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                message: 'Missing required field: transaction_id'
+              })
+            };
+          }
+
+          console.log('Checking payment status for transaction:', transaction_id);
+
+          try {
+            // Get authentication token
+            const accountPeToken = await getAuthToken();
+
+            // Call AccountPe API to check payment status
+            const accountPeResponse = await axios.post(
+              'https://api.accountpe.com/api/payin/payment_link_status',
+              { transaction_id },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${accountPeToken}`
+                },
+                timeout: 30000 // 30 second timeout
+              }
+            );
+
+            console.log('AccountPe API response:', accountPeResponse.data);
+
+            if (accountPeResponse.data && accountPeResponse.data.status === 200) {
+              return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                  success: true,
+                  data: {
+                    status: accountPeResponse.data.data?.status || 'pending',
+                    amount: accountPeResponse.data.data?.amount || 0,
+                    currency: accountPeResponse.data.data?.currency || 'USD',
+                    transaction_id: transaction_id
+                  },
+                  status: accountPeResponse.data.status,
+                  message: accountPeResponse.data.message || 'Payment status retrieved successfully'
+                })
+              };
+            } else {
+              return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({
+                  success: false,
+                  message: accountPeResponse.data?.message || 'Failed to get payment status',
+                  status: accountPeResponse.data?.status || 400
+                })
+              };
+            }
+
+          } catch (apiError) {
+            console.error('AccountPe API error:', apiError.response?.data || apiError.message);
+            
+            // If AccountPe API is not available, fall back to mock response for development
+            if (process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true') {
+              console.log('Falling back to mock response for development/testing');
+              
+              const mockStatus = {
+                success: true,
+                data: {
+                  status: 'completed', // Mock completed status
+                  amount: 10000, // Mock amount in cents
+                  currency: 'USD',
+                  transaction_id: transaction_id
+                },
+                status: 200,
+                message: 'Payment status retrieved successfully (mock)'
+              };
+
+              return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify(mockStatus)
+              };
+            }
+
+            return {
+              statusCode: 500,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                message: 'Payment service temporarily unavailable',
+                error: apiError.response?.data?.message || apiError.message
+              })
+            };
+          }
+
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+          
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+              success: false,
+              message: 'Internal server error',
+              error: error.message
+            })
+          };
+        }
+      }
+
+      // Currency conversion endpoint
+      if (paymentEndpoint === 'currency-conversion' && httpMethod === 'POST') {
+        console.log('Currency conversion endpoint reached'); // Debugging
+        
+        try {
+          const requestBody = JSON.parse(event.body);
+          const { amount, country_code } = requestBody;
+          
+          if (!amount || !country_code) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                message: 'Missing required fields: amount, country_code'
+              })
+            };
+          }
+
+          console.log('Converting amount:', amount, 'for country:', country_code);
+
+          // Mock exchange rates for demonstration (in production, use real API)
+          const exchangeRates: Record<string, number> = {
+            'CM': 0.0016, // 1 USD = 625 XAF (FCFA)
+            'NG': 1500,   // 1 USD = 1500 NGN
+            'GH': 12.5,   // 1 USD = 12.5 GHS
+            'KE': 150,    // 1 USD = 150 KES
+            'SN': 0.0016, // 1 USD = 625 XOF (CFA)
+            'CI': 0.0016, // 1 USD = 625 XOF (CFA)
+            'UG': 0.00028, // 1 USD = 3600 UGX
+            'TZ': 0.00043, // 1 USD = 2300 TZS
+            'ZA': 0.055,  // 1 USD = 18 ZAR
+            'EG': 0.032   // 1 USD = 31 EGP
+          };
+
+          const rate = exchangeRates[country_code];
+          if (!rate) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                message: 'Unsupported country for currency conversion'
+              })
+            };
+          }
+
+          // Calculate conversion with 3% fee
+          const convertedAmount = amount * rate;
+          const feeAmount = convertedAmount * 0.03; // 3% fee
+          const totalAmount = convertedAmount + feeAmount;
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              data: {
+                original_amount: amount,
+                converted_amount: Math.round(convertedAmount * 100) / 100,
+                fee: Math.round(feeAmount * 100) / 100,
+                currency_code: country_code,
+                total_amount: Math.round(totalAmount * 100) / 100
+              },
+              message: 'Currency conversion calculated successfully'
+            })
+          };
+
+        } catch (error) {
+          console.error('Error in currency conversion:', error);
+          
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+              success: false,
+              message: 'Internal server error',
+              error: error.message
+            })
+          };
+        }
+      }
+    }
 
     // Health check - handle both empty path and /health
     if ((endpoint === 'health' || endpoint === '' || pathAfterFunction === '/') && httpMethod === 'GET') {

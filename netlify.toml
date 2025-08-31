@@ -61,13 +61,58 @@
   TEST_MODE = "true"
   NODE_ENV = "production"
 
+# Direct payment function redirects (bypassing the problematic API routing)
+[[redirects]]
+  from = "/api/payments/create-link"
+  to = "/.netlify/functions/payments-create-link"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/payments/status"
+  to = "/.netlify/functions/payments-status"
+  status = 200
+  force = true
+
 # API redirects to Netlify Functions (must come first)
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+  force = true
+
+# Specific payment redirects for testing
+[[redirects]]
+  from = "/api/payments/create-link"
+  to = "/.netlify/functions/api/payments/create-link"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/payments/status"
+  to = "/.netlify/functions/api/payments/status"
+  status = 200
+  force = true
+
+# Test payment function
+[[redirects]]
+  from = "/api/test-payment"
+  to = "/.netlify/functions/test-payment"
+  status = 200
 
 
+
+# Payment webhook redirect
+[[redirects]]
+  from = "/webhooks/payment"
+  to = "/.netlify/functions/payment-webhook"
+  status = 200
+
+# Swychr webhook redirect
+[[redirects]]
+  from = "/webhooks/swychr"
+  to = "/.netlify/functions/swychr-webhook"
+  status = 200
 
 # Redirect all other requests to index.html for SPA routing
 [[redirects]]

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, Shield, Zap, Users, ArrowRight, CheckCircle } from 'lucide-react';
+import { Phone, Shield, Zap, Users, ArrowRight, CheckCircle, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -72,6 +72,15 @@ const Home = () => {
               onClick={() => navigate('/dashboard')}
             >
               My Numbers
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-green-500 text-green-500 hover:bg-green-500/10 text-lg px-8 py-3 h-auto"
+              onClick={() => navigate('/add-funds')}
+            >
+              Add Funds
+              <Wallet className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>

@@ -16,7 +16,6 @@ import {
   Clock,
   Settings,
   DollarSign,
-  Globe,
   BarChart3,
   Activity,
   AlertCircle,
@@ -26,7 +25,8 @@ import {
   Save,
   X,
   Plus,
-  Trash2
+  Trash2,
+  Wallet
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -315,6 +315,15 @@ const Admin = () => {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => navigate('/add-funds')}
+                className="gap-2"
+              >
+                <Wallet className="h-4 w-4" />
+                Add Funds
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => window.location.reload()}
                 className="gap-2"
               >
@@ -338,7 +347,7 @@ const Admin = () => {
               Transactions
             </TabsTrigger>
             <TabsTrigger value="exchange-rates" className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
+              <DollarSign className="h-4 w-4" />
               Exchange Rates
             </TabsTrigger>
             <TabsTrigger value="pricing" className="flex items-center gap-2">
@@ -492,7 +501,7 @@ const Admin = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Globe className="h-5 w-5" />
+                  <DollarSign className="h-5 w-5" />
                   Exchange Rates Management
                 </CardTitle>
               </CardHeader>

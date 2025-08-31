@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, RefreshCw, Clock, TrendingUp, Phone, User } from 'lucide-react';
+import { Plus, RefreshCw, Clock, TrendingUp, Phone, User, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import NumberCard from '@/components/NumberCard';
-import LanguageToggle from '@/components/LanguageToggle';
+
 
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
@@ -160,7 +160,7 @@ React.useEffect(() => {
               <h1 className="text-xl font-bold">My Numbers</h1>
             </div>
             <div className="flex items-center gap-2">
-              <LanguageToggle />
+      
 
               <Button
                 variant="ghost"
@@ -212,6 +212,14 @@ React.useEffect(() => {
           >
             <Plus className="h-5 w-5 mr-2" />
             New Number
+          </Button>
+          <Button
+            onClick={() => navigate('/add-funds')}
+            variant="outline"
+            className="h-12 px-6"
+          >
+            <Wallet className="h-5 w-5 mr-2" />
+            Add Funds
           </Button>
           <Button
             variant="outline"
