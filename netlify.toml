@@ -67,17 +67,7 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
-# Exchange rates endpoint redirect
-[[redirects]]
-  from = "/exchange-rates"
-  to = "/.netlify/functions/api/exchange-rates"
-  status = 200
 
-# Exchange rates update function redirect
-[[redirects]]
-  from = "/update-exchange-rates"
-  to = "/.netlify/functions/update-exchange-rates"
-  status = 200
 
 # Redirect all other requests to index.html for SPA routing
 [[redirects]]

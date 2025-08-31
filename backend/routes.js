@@ -1150,57 +1150,7 @@ export default async function routes(fastify, opts) {
     }
   });
 
-  // Exchange rates management
-  fastify.get('/admin/exchange-rates', { preHandler: requireAuth }, async (request, reply) => {
-    try {
-      const { data, error } = await fastify.supabase
-        .from('exchange_rates')
-        .select('*')
-        .order('currency');
 
-      if (error) {
-        console.error('Error fetching exchange rates:', error);
-        return reply.code(500).send({ error: 'Failed to fetch exchange rates' });
-      }
-
-      return reply.code(200).send(data);
-    } catch (error) {
-      console.error('Error in exchange rates route:', error);
-      return reply.code(500).send({ error: 'Internal server error' });
-    }
-  });
-
-  fastify.post('/api/admin/exchange-rates', async (request, reply) => {
-    try {
-      const { currency, rate, markup } = request.body;
-      
-      if (!currency || !rate) {
-        return reply.code(400).send({ error: 'Currency and rate are required' });
-      }
-
-      const { data, error } = await fastify.supabase
-        .from('exchange_rates')
-        .insert([
-          {
-            currency,
-            rate,
-            markup: markup || 0,
-            updated_at: new Date().toISOString(),
-          }
-        ])
-        .select();
-
-      if (error) {
-        console.error('Error updating exchange rate:', error);
-        return reply.code(500).send({ error: 'Failed to update exchange rate' });
-      }
-
-      return reply.code(200).send(data[0]);
-    } catch (error) {
-      console.error('Error in update exchange rate route:', error);
-      return reply.code(500).send({ error: 'Internal server error' });
-    }
-  });
 
   // Price adjustments management
   fastify.get('/admin/price-adjustments', { preHandler: requireAuth }, async (request, reply) => {
@@ -1470,38 +1420,7 @@ export default async function routes(fastify, opts) {
     }
   });
 
-  // Update exchange rate
-  fastify.put('/admin/exchange-rates/:currency', { preHandler: requireAuth }, async (request, reply) => {
-    try {
-      const { currency } = request.params;
-      const { rate, markup } = request.body;
-      
-      if (!rate || rate <= 0) {
-        return reply.code(400).send({ error: 'Valid rate is required' });
-      }
 
-      const { data, error } = await fastify.supabase
-        .from('exchange_rates')
-        .update({
-          rate: parseFloat(rate),
-          markup: markup !== undefined ? parseFloat(markup) : 10.0,
-          updated_at: new Date().toISOString()
-        })
-        .eq('currency', currency.toUpperCase())
-        .select()
-        .single();
-
-      if (error) {
-        fastify.log.error('Error updating exchange rate:', error);
-        return reply.code(500).send({ error: 'Failed to update exchange rate' });
-      }
-
-      return reply.code(200).send(data);
-    } catch (error) {
-      fastify.log.error('Error in update exchange rate route:', error);
-      return reply.code(500).send({ error: 'Internal server error' });
-    }
-  });
 
   // Update price adjustment
   fastify.put('/admin/price-adjustments/:id', { preHandler: requireAuth }, async (request, reply) => {
@@ -1552,7 +1471,6 @@ export default async function routes(fastify, opts) {
         type: 'order',
         userId: order.user_id,
         amount: order.price,
-        currency: 'USD',
         status: order.status,
         description: `Order for ${order.service} in ${order.country}`,
         createdAt: order.created_at,
@@ -1576,7 +1494,6 @@ export default async function routes(fastify, opts) {
         .from('user_balances')
         .select('balance')
         .eq('user_id', userId)
-        .eq('currency', 'USD')
         .single();
 
       if (balanceError && balanceError.code === 'PGRST116') {
@@ -1585,8 +1502,7 @@ export default async function routes(fastify, opts) {
           .from('user_balances')
           .insert([{
             user_id: userId,
-            balance: 0,
-            currency: 'USD'
+            balance: 0
           }])
           .select('balance')
           .single();
@@ -1779,7 +1695,6 @@ export default async function routes(fastify, opts) {
         .from('user_balances')
         .select('balance')
         .eq('user_id', userId)
-        .eq('currency', 'USD')
         .single();
 
       if (balanceError && balanceError.code === 'PGRST116') {
@@ -1788,8 +1703,7 @@ export default async function routes(fastify, opts) {
           .from('user_balances')
           .insert([{
             user_id: userId,
-            balance: amount,
-            currency: 'USD'
+            balance: amount
           }])
           .select('balance')
           .single();
@@ -1818,7 +1732,6 @@ export default async function routes(fastify, opts) {
           updated_at: new Date().toISOString()
         })
         .eq('user_id', userId)
-        .eq('currency', 'USD')
         .select('balance')
         .single();
 
@@ -1843,7 +1756,6 @@ export default async function routes(fastify, opts) {
       .from('user_balances')
       .select('balance')
       .eq('user_id', userId)
-      .eq('currency', 'USD')
       .single();
 
     if (error || !balanceData) {
@@ -1862,7 +1774,6 @@ export default async function routes(fastify, opts) {
       .from('user_balances')
       .select('balance')
       .eq('user_id', userId)
-      .eq('currency', 'USD')
       .single();
 
     if (balanceError) {
@@ -1881,8 +1792,7 @@ export default async function routes(fastify, opts) {
         balance: newBalance,
         updated_at: new Date().toISOString()
       })
-      .eq('user_id', userId)
-      .eq('currency', 'USD');
+      .eq('user_id', userId);
 
     if (updateError) {
       return { success: false, error: 'Failed to update balance' };

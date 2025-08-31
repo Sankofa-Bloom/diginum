@@ -61,11 +61,10 @@ CREATE TABLE IF NOT EXISTS public.services (
     description TEXT,
     
     -- PRICING STRUCTURE
-    app_price DECIMAL(10, 2) NOT NULL, -- Price charged to customer in app
-    api_price DECIMAL(10, 2) NOT NULL, -- Price charged by SMS provider/API
-    markup_amount DECIMAL(10, 2) NOT NULL, -- Profit margin amount
+    app_price DECIMAL(10, 2) NOT NULL, -- Price charged to customer in app (USD)
+    api_price DECIMAL(10, 2) NOT NULL, -- Price charged by SMS provider/API (USD)
+    markup_amount DECIMAL(10, 2) NOT NULL, -- Profit margin amount (USD)
     markup_percentage DECIMAL(5, 4) NOT NULL, -- Profit margin percentage
-    currency VARCHAR(3) NOT NULL DEFAULT 'USD', -- Currency for all prices
     
     -- SERVICE DETAILS
     country_id VARCHAR(10) NOT NULL REFERENCES public.countries(id),
@@ -74,24 +73,16 @@ CREATE TABLE IF NOT EXISTS public.services (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Create exchange_rates table
-CREATE TABLE IF NOT EXISTS public.exchange_rates (
-    id SERIAL PRIMARY KEY,
-    currency VARCHAR(3) NOT NULL UNIQUE,
-    rate DECIMAL(10, 6) NOT NULL,
-    markup DECIMAL(5, 4) DEFAULT 0.025,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
+
 
 -- 5. Create user_balances table
 CREATE TABLE IF NOT EXISTS public.user_balances (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     balance DECIMAL(15, 2) DEFAULT 0.00 NOT NULL,
-    currency VARCHAR(3) DEFAULT 'USD' NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-    UNIQUE(user_id, currency)
+    UNIQUE(user_id)
 );
 
 
@@ -103,11 +94,10 @@ CREATE TABLE IF NOT EXISTS public.pricing_history (
     country_id VARCHAR(10) NOT NULL REFERENCES public.countries(id),
     
     -- PRICING DETAILS
-    app_price DECIMAL(10, 2) NOT NULL, -- Price charged to customer
-    api_price DECIMAL(10, 2) NOT NULL, -- Price charged by SMS provider
-    markup_amount DECIMAL(10, 2) NOT NULL, -- Profit margin amount
+    app_price DECIMAL(10, 2) NOT NULL, -- Price charged to customer (USD)
+    api_price DECIMAL(10, 2) NOT NULL, -- Price charged by SMS provider (USD)
+    markup_amount DECIMAL(10, 2) NOT NULL, -- Profit margin amount (USD)
     markup_percentage DECIMAL(5, 4) NOT NULL, -- Profit margin percentage
-    currency VARCHAR(3) NOT NULL DEFAULT 'USD', -- Currency for all prices
     
     -- CHANGE TRACKING
     change_reason VARCHAR(100), -- Reason for price change
@@ -131,9 +121,7 @@ CREATE TABLE IF NOT EXISTS public.profit_tracking (
     gross_profit DECIMAL(10, 2) NOT NULL, -- Revenue - Cost
     profit_margin DECIMAL(5, 4) NOT NULL, -- Profit as percentage of revenue
     
-    -- CURRENCY AND EXCHANGE
-    base_currency VARCHAR(3) NOT NULL DEFAULT 'USD',
-    exchange_rate DECIMAL(10, 6), -- Exchange rate if different from base
+
     
     -- TRACKING
     tracking_date DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -152,7 +140,6 @@ CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at);
 
 -- User balances indexes
 CREATE INDEX IF NOT EXISTS idx_user_balances_user_id ON public.user_balances(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_balances_currency ON public.user_balances(currency);
 
 
 

@@ -35,38 +35,7 @@ const parseBody = (body, contentType) => {
   }
 };
 
-// Exchange rates with VAT (current market rates as of August 2025)
-const fallbackRates = [
-  { code: 'USD', rate: 1.0, vat: 0.0 },
-  { code: 'EUR', rate: 0.85, vat: 1.5 },
-  { code: 'GBP', rate: 0.73, vat: 2.0 },
-  { code: 'JPY', rate: 149.80, vat: 1.0 },
-  { code: 'CAD', rate: 1.35, vat: 1.2 },
-  { code: 'AUD', rate: 1.48, vat: 1.3 },
-  { code: 'CHF', rate: 0.88, vat: 1.8 },
-  { code: 'CNY', rate: 7.15, vat: 0.8 },
-  { code: 'INR', rate: 83.25, vat: 2.5 },
-  { code: 'BRL', rate: 5.45, vat: 3.5 },
-  { code: 'MXN', rate: 17.85, vat: 2.8 },
-  { code: 'SGD', rate: 1.32, vat: 1.1 },
-  { code: 'HKD', rate: 7.82, vat: 0.9 },
-  { code: 'SEK', rate: 10.45, vat: 2.2 },
-  { code: 'NOK', rate: 10.85, vat: 2.4 },
-  { code: 'DKK', rate: 6.34, vat: 2.1 },
-  { code: 'PLN', rate: 3.98, vat: 2.7 },
-  { code: 'CZK', rate: 22.15, vat: 2.3 },
-  { code: 'HUF', rate: 365.80, vat: 2.9 },
-  { code: 'RUB', rate: 92.50, vat: 4.0 },
-  { code: 'TRY', rate: 34.15, vat: 5.2 },
-  { code: 'ZAR', rate: 18.35, vat: 3.8 },
-  { code: 'KRW', rate: 1342.00, vat: 1.4 },
-  { code: 'THB', rate: 35.80, vat: 1.6 },
-  { code: 'MYR', rate: 4.48, vat: 1.7 },
-  { code: 'IDR', rate: 15485.00, vat: 2.1 },
-  { code: 'PHP', rate: 56.25, vat: 2.4 },
-  { code: 'NGN', rate: 1635.50, vat: 3.0 },
-  { code: 'XAF', rate: 563.34, vat: 2.0 }
-];
+
 
 exports.handler = async (event, context) => {
   console.log('=== NETLIFY FUNCTION HANDLER START ===');
@@ -141,15 +110,7 @@ exports.handler = async (event, context) => {
 
 
 
-    // Exchange rates endpoint
-    if (endpoint === 'exchange-rates' && httpMethod === 'GET') {
-      console.log('Using fallback exchange rates with VAT');
-      return {
-        statusCode: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rates: fallbackRates })
-      };
-    }
+
 
     // Countries endpoint
     if (endpoint === 'countries' && httpMethod === 'GET') {
