@@ -1,12 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, Shield, Zap, Users, ArrowRight, CheckCircle, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { getCurrentUser } from '@/lib/auth';
 
 const Home = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(setUser).catch(() => setUser(null));
+  }, []);
 
   const features = [
     {
@@ -73,15 +78,17 @@ const Home = () => {
             >
               My Numbers
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-green-500 text-green-500 hover:bg-green-500/10 text-lg px-8 py-3 h-auto"
-              onClick={() => navigate('/add-funds')}
-            >
-              Add Funds
-              <Wallet className="ml-2 h-5 w-5" />
-            </Button>
+            {user && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="border-green-500 text-green-500 hover:bg-green-500/10 text-lg px-8 py-3 h-auto"
+                onClick={() => navigate('/add-funds')}
+              >
+                Add Funds
+                <Wallet className="ml-2 h-5 w-5" />
+              </Button>
+            )}
           </div>
         </div>
       </section>
