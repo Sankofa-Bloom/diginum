@@ -271,21 +271,19 @@ const Buy = () => {
               <Loader2 className="h-6 w-6 animate-spin mr-2" />
               Loading countries...
             </div>
-          ) : (
-            {Array.isArray(countries) ? countries.map((country) => (
-              <Card key={country.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl mb-2">📞</div>
-                  <h3 className="font-semibold">{country.name}</h3>
-                  <p className="text-sm text-muted-foreground">{country.code}</p>
-                </CardContent>
-              </Card>
-            )) : (
-              <div className="col-span-full text-center py-8 text-muted-foreground">
-                No countries available
-              </div>
-            )}
-          )}
+          ) : Array.isArray(countries) ? countries.map((country) => (
+            <Card key={country.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl mb-2">📞</div>
+                <h3 className="font-semibold">{country.name}</h3>
+                <p className="text-sm text-muted-foreground">{country.code}</p>
+              </CardContent>
+            </Card>
+          )) : (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              No countries available
+            </div>
+          )
         </div>
       </div>
     );
@@ -413,7 +411,7 @@ const Buy = () => {
               </div>
             )}
             
-            {!loadingCountries && countries.length === 0 && (
+            {!loadingCountries && (!Array.isArray(countries) || countries.length === 0) && (
               <div className="text-center py-8 text-muted-foreground">
                 No countries available at the moment.
               </div>
@@ -486,7 +484,7 @@ const Buy = () => {
               </div>
             )}
             
-            {!loadingServices && filteredServices.length === 0 && (
+            {!loadingServices && (!Array.isArray(filteredServices) || filteredServices.length === 0) && (
               <div className="text-center py-8 text-muted-foreground">
                 {serviceSearch ? 'No services found matching your search.' : 'No services available for this country.'}
               </div>
