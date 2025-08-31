@@ -61,6 +61,19 @@
   TEST_MODE = "true"
   NODE_ENV = "production"
 
+# Direct payment function redirects (bypassing the problematic API routing)
+[[redirects]]
+  from = "/api/payments/create-link"
+  to = "/.netlify/functions/payments-create-link"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/payments/status"
+  to = "/.netlify/functions/payments-status"
+  status = 200
+  force = true
+
 # API redirects to Netlify Functions (must come first)
 [[redirects]]
   from = "/api/*"

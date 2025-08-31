@@ -87,18 +87,18 @@ Frontend Request → Netlify Function → AccountPe API → Return Status → Up
 ```sql
 CREATE TABLE transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
+    user_id UUID REFERENCES auth.users(id),
   type VARCHAR(20) NOT NULL, -- 'deposit', 'purchase', 'refund'
-  amount DECIMAL(10,2) NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
   currency VARCHAR(3) DEFAULT 'USD',
   status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'completed', 'failed', 'cancelled'
-  reference VARCHAR(100) UNIQUE NOT NULL,
-  description TEXT,
+    reference VARCHAR(100) UNIQUE NOT NULL,
+    description TEXT,
   transaction_id VARCHAR(100) UNIQUE NOT NULL,
-  country_code VARCHAR(2),
-  customer_name VARCHAR(255),
-  customer_email VARCHAR(255),
-  customer_mobile VARCHAR(20),
+    country_code VARCHAR(2),
+    customer_name VARCHAR(255),
+    customer_email VARCHAR(255),
+    customer_mobile VARCHAR(20),
   metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
