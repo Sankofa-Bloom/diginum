@@ -722,9 +722,12 @@ exports.handler = async (event, context) => {
     // Payment endpoints
     if (endpoint === 'payments') {
       const paymentEndpoint = pathParts[1];
+      
+      console.log('Payment endpoint reached:', { endpoint, paymentEndpoint, pathParts, httpMethod });
 
       // Create payment link
       if (paymentEndpoint === 'create-link' && httpMethod === 'POST') {
+        console.log('Create payment link endpoint reached');
         try {
           // Validate required fields based on AccountPe API requirements
           const { country_code, name, email, amount, transaction_id, description, pass_digital_charge } = requestBody;
