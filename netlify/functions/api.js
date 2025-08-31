@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
+const axios = require('axios'); // Added axios for AccountPe API calls
 
 // Initialize Supabase clients
 // - supabase: for auth (uses anon key)
@@ -717,6 +718,254 @@ exports.handler = async (event, context) => {
     }
 
 
+
+    // Payment endpoints
+    if (endpoint === 'payments') {
+      const paymentEndpoint = pathParts[1];
+
+      // Create payment link
+      if (paymentEndpoint === 'create-link' && httpMethod === 'POST') {
+        try {
+          // Validate required fields based on AccountPe API requirements
+          const { country_code, name, email, amount, transaction_id, description, pass_digital_charge } = requestBody;
+          
+          if (!country_code || !name || !email || !amount || !transaction_id) {
+            return {
+              statusCode: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                success: false,
+                message: 'Missing required fields: country_code, name, email, amount, transaction_id'
+              })
+            };
+          }
+
+          // Prepare request for AccountPe API
+          const accountPeRequest = {
+            country_code,
+            name,
+            email,
+            mobile: requestBody.mobile || '',
+            amount: Math.round(amount), // Ensure amount is an integer
+            transaction_id,
+            description: description || `Payment for transaction ${transaction_id}`,
+            pass_digital_charge: pass_digital_charge || false
+          };
+
+          console.log('Creating payment link with AccountPe API:', accountPeRequest);
+
+          try {
+            // Call AccountPe API to create payment link
+            const accountPeResponse = await axios.post(
+              'https://api.accountpe.com/api/payin/create_payment_links',
+              accountPeRequest,
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  // Add authentication if required
+                  // 'Authorization': `Bearer ${process.env.ACCOUNTPE_API_KEY}`
+                },
+                timeout: 30000 // 30 second timeout
+              }
+            );
+
+            console.log('AccountPe API response:', accountPeResponse.data);
+
+            if (accountPeResponse.data && accountPeResponse.data.status === 200) {
+              return {
+                statusCode: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  success: true,
+                  data: {
+                    payment_url: accountPeResponse.data.data?.payment_url || accountPeResponse.data.data?.url,
+                    transaction_id: transaction_id,
+                    status: 'pending'
+                  },
+                  status: accountPeResponse.data.status,
+                  message: accountPeResponse.data.message || 'Payment link created successfully'
+                })
+              };
+            } else {
+              return {
+                statusCode: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  success: false,
+                  message: accountPeResponse.data?.message || 'Failed to create payment link',
+                  status: accountPeResponse.data?.status || 400
+                })
+              };
+            }
+
+          } catch (apiError) {
+            console.error('AccountPe API error:', apiError.response?.data || apiError.message);
+            
+            // If AccountPe API is not available, fall back to mock response for development
+            if (process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true') {
+              console.log('Falling back to mock response for development/testing');
+              
+              const mockPaymentUrl = `https://payment.accountpe.com/pay/${transaction_id}`;
+              const mockResponse = {
+                success: true,
+                data: {
+                  payment_url: mockPaymentUrl,
+                  transaction_id: transaction_id,
+                  status: 'pending'
+                },
+                status: 200,
+                message: 'Payment link created successfully (mock)'
+              };
+
+              return {
+                statusCode: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify(mockResponse)
+              };
+            }
+
+            return {
+              statusCode: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                success: false,
+                message: 'Payment service temporarily unavailable',
+                error: apiError.response?.data?.message || apiError.message
+              })
+            };
+          }
+
+        } catch (error) {
+          console.error('Error creating payment link:', error);
+          
+          return {
+            statusCode: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              success: false,
+              message: 'Internal server error',
+              error: error.message
+            })
+          };
+        }
+      }
+
+      // Check payment status
+      if (paymentEndpoint === 'status' && httpMethod === 'POST') {
+        try {
+          // Validate required fields
+          const { transaction_id } = requestBody;
+          
+          if (!transaction_id) {
+            return {
+              statusCode: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                success: false,
+                message: 'Missing required field: transaction_id'
+              })
+            };
+          }
+
+          console.log('Checking payment status for transaction:', transaction_id);
+
+          try {
+            // Call AccountPe API to check payment status
+            const accountPeResponse = await axios.post(
+              'https://api.accountpe.com/api/payin/payment_link_status',
+              { transaction_id },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  // Add authentication if required
+                  // 'Authorization': `Bearer ${process.env.ACCOUNTPE_API_KEY}`
+                },
+                timeout: 30000 // 30 second timeout
+              }
+            );
+
+            console.log('AccountPe API response:', accountPeResponse.data);
+
+            if (accountPeResponse.data && accountPeResponse.data.status === 200) {
+              return {
+                statusCode: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  success: true,
+                  data: {
+                    status: accountPeResponse.data.data?.status || 'pending',
+                    amount: accountPeResponse.data.data?.amount || 0,
+                    currency: accountPeResponse.data.data?.currency || 'USD',
+                    transaction_id: transaction_id
+                  },
+                  status: accountPeResponse.data.status,
+                  message: accountPeResponse.data.message || 'Payment status retrieved successfully'
+                })
+              };
+            } else {
+              return {
+                statusCode: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  success: false,
+                  message: accountPeResponse.data?.message || 'Failed to get payment status',
+                  status: accountPeResponse.data?.status || 400
+                })
+              };
+            }
+
+          } catch (apiError) {
+            console.error('AccountPe API error:', apiError.response?.data || apiError.message);
+            
+            // If AccountPe API is not available, fall back to mock response for development
+            if (process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true') {
+              console.log('Falling back to mock response for development/testing');
+              
+              const mockStatus = {
+                success: true,
+                data: {
+                  status: 'completed', // Mock completed status
+                  amount: 10000, // Mock amount in cents
+                  currency: 'USD',
+                  transaction_id: transaction_id
+                },
+                status: 200,
+                message: 'Payment status retrieved successfully (mock)'
+              };
+
+              return {
+                statusCode: 200,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                body: JSON.stringify(mockStatus)
+              };
+            }
+
+            return {
+              statusCode: 500,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                success: false,
+                message: 'Payment service temporarily unavailable',
+                error: apiError.response?.data?.message || apiError.message
+              })
+            };
+          }
+
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+          
+          return {
+            statusCode: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              success: false,
+              message: 'Internal server error',
+              error: error.message
+            })
+          };
+        }
+      }
+    }
 
     // Health check - handle both empty path and /health
     if ((endpoint === 'health' || endpoint === '' || pathAfterFunction === '/') && httpMethod === 'GET') {
