@@ -67,9 +67,8 @@ export class PaymentService {
   private backendUrl: string;
 
   constructor() {
-    // In development, default to localhost:3000, in production use relative path
-    this.backendUrl = import.meta.env.VITE_API_BASE_URL || 
-      (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
+    // Use environment variable if set, otherwise use relative path for production
+    this.backendUrl = import.meta.env.VITE_API_BASE_URL || '/api';
   }
 
   /**
