@@ -569,6 +569,7 @@ export class PaymentService {
    * Get supported countries
    */
   getSupportedCountries(): string[] {
+    // Only include countries that AccountPe API actually supports
     return [
       'CM', // Cameroon
       'NG', // Nigeria
@@ -578,16 +579,6 @@ export class PaymentService {
       'CI', // Ivory Coast
       'UG', // Uganda
       'TZ', // Tanzania
-      'US', // United States
-      'GB', // United Kingdom
-      'EU', // European Union
-      'CA', // Canada
-      'AU', // Australia
-      'IN', // India
-      'CN', // China
-      'JP', // Japan
-      'BR', // Brazil
-      'MX', // Mexico
       'ZA', // South Africa
       'EG'  // Egypt
     ];

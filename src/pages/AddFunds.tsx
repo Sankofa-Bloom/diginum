@@ -29,7 +29,7 @@ const AddFunds = () => {
 
   // Form states
   const [amount, setAmount] = useState(state?.amount || 10);
-  const [countryCode, setCountryCode] = useState('US');
+  const [countryCode, setCountryCode] = useState('NG'); // Changed from 'US' to 'NG' (Nigeria)
   
   // UI states
   const [isLoading, setIsLoading] = useState(false);
