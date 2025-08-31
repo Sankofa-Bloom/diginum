@@ -66,17 +66,20 @@
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
+  force = true
 
 # Specific payment redirects for testing
 [[redirects]]
   from = "/api/payments/create-link"
   to = "/.netlify/functions/api/payments/create-link"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/payments/status"
   to = "/.netlify/functions/api/payments/status"
   status = 200
+  force = true
 
 # Test payment function
 [[redirects]]
