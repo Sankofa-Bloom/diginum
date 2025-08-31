@@ -2,6 +2,34 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const axios = require('axios'); // Added axios for AccountPe API calls
 
+// Function to get authentication token from AccountPe
+async function getAuthToken() {
+  try {
+    const authResponse = await axios.post(
+      'https://api.accountpe.com/api/payin/admin/auth',
+      {
+        email: process.env.ACCOUNTPE_EMAIL,
+        password: process.env.ACCOUNTPE_PASSWORD
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      }
+    );
+
+    if (authResponse.data && authResponse.data.token) {
+      return authResponse.data.token;
+    } else {
+      throw new Error('No token received from authentication');
+    }
+  } catch (error) {
+    console.error('Authentication error:', error.response?.data || error.message);
+    throw new Error(`Authentication failed: ${error.response?.data?.message || error.message}`);
+  }
+}
+
 // Initialize Supabase clients
 // - supabase: for auth (uses anon key)
 // - supabaseAdmin: for privileged DB ops after verifying user (bypasses RLS)
@@ -758,6 +786,9 @@ exports.handler = async (event, context) => {
           console.log('Creating payment link with AccountPe API:', accountPeRequest);
 
           try {
+            // Get authentication token
+            const accountPeToken = await getAuthToken();
+
             // Call AccountPe API to create payment link
             const accountPeResponse = await axios.post(
               'https://api.accountpe.com/api/payin/create_payment_links',
@@ -765,8 +796,7 @@ exports.handler = async (event, context) => {
               {
                 headers: {
                   'Content-Type': 'application/json',
-                  // Add authentication if required
-                  // 'Authorization': `Bearer ${process.env.ACCOUNTPE_API_KEY}`
+                  'Authorization': `Bearer ${accountPeToken}`
                 },
                 timeout: 30000 // 30 second timeout
               }
@@ -873,6 +903,9 @@ exports.handler = async (event, context) => {
           console.log('Checking payment status for transaction:', transaction_id);
 
           try {
+            // Get authentication token
+            const accountPeToken = await getAuthToken();
+
             // Call AccountPe API to check payment status
             const accountPeResponse = await axios.post(
               'https://api.accountpe.com/api/payin/payment_link_status',
@@ -880,8 +913,7 @@ exports.handler = async (event, context) => {
               {
                 headers: {
                   'Content-Type': 'application/json',
-                  // Add authentication if required
-                  // 'Authorization': `Bearer ${process.env.ACCOUNTPE_API_KEY}`
+                  'Authorization': `Bearer ${accountPeToken}`
                 },
                 timeout: 30000 // 30 second timeout
               }
