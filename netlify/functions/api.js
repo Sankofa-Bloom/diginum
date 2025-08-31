@@ -885,14 +885,16 @@ exports.handler = async (event, context) => {
 
       // Check payment status
       if (paymentEndpoint === 'status' && httpMethod === 'POST') {
+        console.log('Check payment status endpoint reached'); // Debugging
+        
         try {
-          // Validate required fields
+          const requestBody = JSON.parse(event.body);
           const { transaction_id } = requestBody;
           
           if (!transaction_id) {
             return {
               statusCode: 400,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              headers,
               body: JSON.stringify({
                 success: false,
                 message: 'Missing required field: transaction_id'
@@ -924,7 +926,7 @@ exports.handler = async (event, context) => {
             if (accountPeResponse.data && accountPeResponse.data.status === 200) {
               return {
                 statusCode: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                   success: true,
                   data: {
@@ -940,7 +942,7 @@ exports.handler = async (event, context) => {
             } else {
               return {
                 statusCode: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                   success: false,
                   message: accountPeResponse.data?.message || 'Failed to get payment status',
@@ -970,14 +972,14 @@ exports.handler = async (event, context) => {
 
               return {
                 statusCode: 200,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify(mockStatus)
               };
             }
 
             return {
               statusCode: 500,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              headers,
               body: JSON.stringify({
                 success: false,
                 message: 'Payment service temporarily unavailable',
@@ -991,7 +993,90 @@ exports.handler = async (event, context) => {
           
           return {
             statusCode: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers,
+            body: JSON.stringify({
+              success: false,
+              message: 'Internal server error',
+              error: error.message
+            })
+          };
+        }
+      }
+
+      // Currency conversion endpoint
+      if (paymentEndpoint === 'currency-conversion' && httpMethod === 'POST') {
+        console.log('Currency conversion endpoint reached'); // Debugging
+        
+        try {
+          const requestBody = JSON.parse(event.body);
+          const { amount, country_code } = requestBody;
+          
+          if (!amount || !country_code) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                message: 'Missing required fields: amount, country_code'
+              })
+            };
+          }
+
+          console.log('Converting amount:', amount, 'for country:', country_code);
+
+          // Mock exchange rates for demonstration (in production, use real API)
+          const exchangeRates: Record<string, number> = {
+            'CM': 0.0016, // 1 USD = 625 XAF (FCFA)
+            'NG': 1500,   // 1 USD = 1500 NGN
+            'GH': 12.5,   // 1 USD = 12.5 GHS
+            'KE': 150,    // 1 USD = 150 KES
+            'SN': 0.0016, // 1 USD = 625 XOF (CFA)
+            'CI': 0.0016, // 1 USD = 625 XOF (CFA)
+            'UG': 0.00028, // 1 USD = 3600 UGX
+            'TZ': 0.00043, // 1 USD = 2300 TZS
+            'ZA': 0.055,  // 1 USD = 18 ZAR
+            'EG': 0.032   // 1 USD = 31 EGP
+          };
+
+          const rate = exchangeRates[country_code];
+          if (!rate) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                message: 'Unsupported country for currency conversion'
+              })
+            };
+          }
+
+          // Calculate conversion with 3% fee
+          const convertedAmount = amount * rate;
+          const feeAmount = convertedAmount * 0.03; // 3% fee
+          const totalAmount = convertedAmount + feeAmount;
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              data: {
+                original_amount: amount,
+                converted_amount: Math.round(convertedAmount * 100) / 100,
+                fee: Math.round(feeAmount * 100) / 100,
+                currency_code: country_code,
+                total_amount: Math.round(totalAmount * 100) / 100
+              },
+              message: 'Currency conversion calculated successfully'
+            })
+          };
+
+        } catch (error) {
+          console.error('Error in currency conversion:', error);
+          
+          return {
+            statusCode: 500,
+            headers,
             body: JSON.stringify({
               success: false,
               message: 'Internal server error',

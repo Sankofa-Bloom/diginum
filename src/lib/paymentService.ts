@@ -63,6 +63,30 @@ export interface AddFundsResponse {
   message: string;
 }
 
+export interface CurrencyConversionRequest {
+  country_code: string;
+  amount: number;
+}
+
+export interface CurrencyConversionResponse {
+  success: boolean;
+  data: {
+    original_amount: number;
+    converted_amount: number;
+    fee: number;
+    currency_code: string;
+  };
+  message: string;
+}
+
+export interface CountryCurrencyInfo {
+  country_code: string;
+  country_name: string;
+  currency_code: string;
+  currency_symbol: string;
+  currency_name: string;
+}
+
 export class PaymentService {
   private backendUrl: string;
   private accountPeBaseUrl: string;
@@ -544,6 +568,112 @@ export class PaymentService {
     } catch (error) {
       console.error('Error crediting user account:', error);
     }
+  }
+
+  /**
+   * Get currency conversion with 3% fee for a specific country
+   */
+  async getCurrencyConversion(request: CurrencyConversionRequest): Promise<CurrencyConversionResponse> {
+    try {
+      const response = await fetch(`${this.backendUrl}/payments/currency-conversion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        return data;
+      } else {
+        throw new Error(data.message || 'Failed to get currency conversion');
+      }
+    } catch (error) {
+      console.error('Currency conversion error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get country currency information
+   */
+  getCountryCurrencyInfo(countryCode: string): CountryCurrencyInfo | null {
+    const countryCurrencies: Record<string, CountryCurrencyInfo> = {
+      'CM': {
+        country_code: 'CM',
+        country_name: 'Cameroon',
+        currency_code: 'XAF',
+        currency_symbol: 'FCFA',
+        currency_name: 'Central African CFA Franc'
+      },
+      'NG': {
+        country_code: 'NG',
+        country_name: 'Nigeria',
+        currency_code: 'NGN',
+        currency_symbol: '₦',
+        currency_name: 'Nigerian Naira'
+      },
+      'GH': {
+        country_code: 'GH',
+        country_name: 'Ghana',
+        currency_code: 'GHS',
+        currency_symbol: '₵',
+        currency_name: 'Ghanaian Cedi'
+      },
+      'KE': {
+        country_code: 'KE',
+        country_name: 'Kenya',
+        currency_code: 'KES',
+        currency_symbol: 'KSh',
+        currency_name: 'Kenyan Shilling'
+      },
+      'SN': {
+        country_code: 'SN',
+        country_name: 'Senegal',
+        currency_code: 'XOF',
+        currency_symbol: 'CFA',
+        currency_name: 'West African CFA Franc'
+      },
+      'CI': {
+        country_code: 'CI',
+        country_name: 'Ivory Coast',
+        currency_code: 'XOF',
+        currency_symbol: 'CFA',
+        currency_name: 'West African CFA Franc'
+      },
+      'UG': {
+        country_code: 'UG',
+        country_name: 'Uganda',
+        currency_code: 'UGX',
+        currency_symbol: 'USh',
+        currency_name: 'Ugandan Shilling'
+      },
+      'TZ': {
+        country_code: 'TZ',
+        country_name: 'Tanzania',
+        currency_code: 'TZS',
+        currency_symbol: 'TSh',
+        currency_name: 'Tanzanian Shilling'
+      },
+      'ZA': {
+        country_code: 'ZA',
+        country_name: 'South Africa',
+        currency_code: 'ZAR',
+        currency_symbol: 'R',
+        currency_name: 'South African Rand'
+      },
+      'EG': {
+        country_code: 'EG',
+        country_name: 'Egypt',
+        currency_code: 'EGP',
+        currency_symbol: 'E£',
+        currency_name: 'Egyptian Pound'
+      }
+    };
+
+    return countryCurrencies[countryCode] || null;
   }
 
   /**

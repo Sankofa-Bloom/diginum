@@ -11,10 +11,11 @@ import {
   DollarSign, 
   ArrowLeft,
   Wallet,
-  CreditCard
+  CreditCard,
+  Info
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';
-import { paymentService } from '@/lib/paymentService';
+import { paymentService, CurrencyConversionResponse } from '@/lib/paymentService';
 
 interface LocationState {
   orderId?: string;
@@ -29,16 +30,28 @@ const AddFunds = () => {
 
   // Form states
   const [amount, setAmount] = useState(state?.amount || 10);
-  const [countryCode, setCountryCode] = useState('NG'); // Changed from 'US' to 'NG' (Nigeria)
+  const [countryCode, setCountryCode] = useState('NG');
   
   // UI states
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
+  
+  // Currency conversion states
+  const [conversionData, setConversionData] = useState<CurrencyConversionResponse | null>(null);
+  const [conversionLoading, setConversionLoading] = useState(false);
 
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (amount > 0 && countryCode) {
+      calculateCurrencyConversion();
+    } else {
+      setConversionData(null);
+    }
+  }, [amount, countryCode]);
 
   const checkAuth = async () => {
     try {
@@ -62,6 +75,24 @@ const AddFunds = () => {
       setCurrentBalance(balance);
     } catch (error) {
       console.error('Failed to load balance:', error);
+    }
+  };
+
+  const calculateCurrencyConversion = async () => {
+    if (amount <= 0 || !countryCode) return;
+    
+    setConversionLoading(true);
+    try {
+      const response = await paymentService.getCurrencyConversion({
+        amount,
+        country_code: countryCode
+      });
+      setConversionData(response);
+    } catch (error) {
+      console.error('Failed to calculate currency conversion:', error);
+      setConversionData(null);
+    } finally {
+      setConversionLoading(false);
     }
   };
 
@@ -128,20 +159,14 @@ const AddFunds = () => {
       'CI': 'Ivory Coast',
       'UG': 'Uganda',
       'TZ': 'Tanzania',
-      'US': 'United States',
-      'GB': 'United Kingdom',
-      'EU': 'European Union',
-      'CA': 'Canada',
-      'AU': 'Australia',
-      'IN': 'India',
-      'CN': 'China',
-      'JP': 'Japan',
-      'BR': 'Brazil',
-      'MX': 'Mexico',
       'ZA': 'South Africa',
       'EG': 'Egypt'
     };
     return countryNames[countryCode] || countryCode;
+  };
+
+  const getCurrencyInfo = () => {
+    return paymentService.getCountryCurrencyInfo(countryCode);
   };
 
   if (!isAuthenticated) {
@@ -151,6 +176,8 @@ const AddFunds = () => {
       </div>
     );
   }
+
+  const currencyInfo = getCurrencyInfo();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
@@ -226,9 +253,51 @@ const AddFunds = () => {
             </Select>
           </div>
 
+          {/* Currency Conversion Display */}
+          {conversionData && currencyInfo && (
+            <Card className="bg-gray-50">
+              <CardContent className="pt-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Info className="h-4 w-4" />
+                    <span>Payment Details</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Amount:</span>
+                      <div className="font-medium">${amount.toFixed(2)} USD</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Converted:</span>
+                      <div className="font-medium">
+                        {conversionData.data.converted_amount.toFixed(2)} {currencyInfo.currency_code}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Fee (3%):</span>
+                      <div className="font-medium text-orange-600">
+                        {conversionData.data.fee.toFixed(2)} {currencyInfo.currency_code}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Total:</span>
+                      <div className="font-medium text-green-600 text-lg">
+                        {conversionData.data.total_amount.toFixed(2)} {currencyInfo.currency_symbol}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Button 
             onClick={handleAddFunds}
-            disabled={isLoading || !amount || amount <= 0 || !countryCode}
+            disabled={isLoading || !amount || amount <= 0 || !countryCode || conversionLoading}
             className="w-full"
             size="lg"
           >
@@ -237,10 +306,15 @@ const AddFunds = () => {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Redirecting to Payment...
               </>
+            ) : conversionLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Calculating...
+              </>
             ) : (
               <>
                 <CreditCard className="mr-2 h-4 w-4" />
-                Pay ${amount.toFixed(2)}
+                Pay {conversionData ? `${conversionData.data.total_amount.toFixed(2)} ${currencyInfo?.currency_symbol}` : `$${amount.toFixed(2)}`}
               </>
             )}
           </Button>
