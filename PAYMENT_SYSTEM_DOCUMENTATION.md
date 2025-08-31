@@ -18,18 +18,18 @@ User Request → Payment Link Creation → AccountPe Processing → Payment Comp
 4. **Transaction Management** - Database operations and tracking
 5. **Balance Management** - User account balance handling
 
-## 💳 AccountPe API Integration
+## 💳 Backend API Integration
 
 ### **API Endpoints**
-- **Base URL**: `https://api.accountpe.com/api/payin`
-- **Authentication**: `/admin/auth` (POST)
-- **Create Payment**: `/create_payment_links` (POST)
-- **Check Status**: `/payment_link_status` (POST)
+- **Base URL**: Backend API (e.g., `http://localhost:3000/api`)
+- **Create Payment**: `/payments/create-link` (POST)
+- **Check Status**: `/payments/status` (POST)
 
-### **Authentication Flow**
-1. **Login**: Send email/password to `/admin/auth`
-2. **Token**: Receive JWT token for subsequent requests
-3. **Authorization**: Include token in `Authorization: Bearer <token>` header
+### **Architecture**
+1. **Frontend**: Sends payment requests to backend
+2. **Backend**: Handles AccountPe API authentication and communication
+3. **Security**: API credentials stored securely on backend
+4. **Proxy**: Backend acts as proxy for external payment APIs
 
 ### **Payment Link Creation**
 ```typescript
@@ -55,9 +55,9 @@ const statusRequest = {
 ## 🔐 Security Features
 
 ### **Authentication**
-- **JWT Token Management**: Secure API authentication
-- **Token Refresh**: Automatic token renewal
-- **Secure Headers**: Proper authorization headers
+- **Backend Proxy**: API credentials stored securely on backend
+- **No Frontend Exposure**: Sensitive data never exposed to client
+- **Secure Communication**: HTTPS communication between frontend and backend
 
 ### **Data Validation**
 - **Input Sanitization**: All user inputs validated
@@ -151,10 +151,8 @@ CREATE TABLE transactions (
 
 ### **Environment Variables**
 ```bash
-# Payment API Configuration
-VITE_PAYMENT_API_URL=https://api.accountpe.com/api/payin
-VITE_PAYMENT_EMAIL=your_payment_api_email
-VITE_PAYMENT_PASSWORD=your_payment_api_password
+# Backend API Configuration
+VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
 ## 🚀 Getting Started
@@ -164,9 +162,8 @@ VITE_PAYMENT_PASSWORD=your_payment_api_password
 # Copy environment template
 cp env.template .env
 
-# Fill in your AccountPe credentials
-VITE_PAYMENT_EMAIL=your_actual_email
-VITE_PAYMENT_PASSWORD=your_actual_password
+# Set your backend API URL
+VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
 ### **2. Database Setup**
@@ -320,8 +317,8 @@ VITE_LOG_LEVEL=debug
 
 ## 🔗 API Documentation Reference
 
-This implementation is based on the official AccountPe API documentation:
-- **Base URL**: `https://api.accountpe.com/api/payin`
-- **Authentication**: JWT-based with email/password
-- **Payment Links**: Dynamic payment link generation
-- **Status Checking**: Real-time payment status updates
+This implementation uses a backend proxy approach:
+- **Frontend**: Communicates with backend API endpoints
+- **Backend**: Handles AccountPe API integration securely
+- **Security**: API credentials stored on backend only
+- **Architecture**: Monorepo with separated concerns

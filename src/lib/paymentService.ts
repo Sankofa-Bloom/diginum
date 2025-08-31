@@ -64,44 +64,90 @@ export interface AddFundsResponse {
 }
 
 export class PaymentService {
-  private baseUrl: string;
-  private authToken: string | null = null;
+  private backendUrl: string;
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_PAYMENT_API_URL || 'https://api.accountpe.com/api/payin';
+    this.backendUrl = import.meta.env.VITE_API_BASE_URL || '/api';
   }
 
   /**
-   * Authenticate with the payment API
+   * Create a payment link for adding funds
    */
-  async authenticate(): Promise<boolean> {
+  async createPaymentLink(request: PaymentLinkRequest): Promise<PaymentLinkResponse> {
     try {
-      const email = import.meta.env.VITE_PAYMENT_EMAIL;
-      const password = import.meta.env.VITE_PAYMENT_PASSWORD;
-
-      if (!email || !password || email === 'your_payment_api_email_here' || password === 'your_payment_api_password_here') {
-        console.error('Payment API credentials not configured. Please set VITE_PAYMENT_EMAIL and VITE_PAYMENT_PASSWORD in your .env file');
-        return false;
-      }
-
-      const response = await fetch(`${this.baseUrl}/admin/auth`, {
+      const response = await fetch(`${this.backendUrl}/payments/create-link`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(request),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        this.authToken = data.token || data.access_token;
-        return true;
-      }
+      const data = await response.json();
 
-      return false;
+      if (response.ok) {
+        return {
+          success: true,
+          data: data.data,
+          status: data.status,
+          message: data.message,
+          transaction_id: data.transaction_id,
+          payment_url: data.data?.payment_url || data.data?.url
+        };
+      } else {
+        return {
+          success: false,
+          status: data.status || response.status,
+          message: data.message || 'Failed to create payment link'
+        };
+      }
     } catch (error) {
-      console.error('Authentication failed:', error);
-      return false;
+      console.error('Create payment link error:', error);
+      return {
+        success: false,
+        status: 500,
+        message: 'Internal error occurred'
+      };
+    }
+  }
+
+  /**
+   * Check payment status
+   */
+  async checkPaymentStatus(transactionId: string): Promise<PaymentStatusResponse> {
+    try {
+      const response = await fetch(`${this.backendUrl}/payments/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ transaction_id: transactionId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.status === 200) {
+        return {
+          success: true,
+          data: data.data,
+          status: data.status,
+          message: data.message,
+          payment_status: this.mapPaymentStatus(data.data?.status)
+        };
+      } else {
+        return {
+          success: false,
+          status: data.status || response.status,
+          message: data.message || 'Failed to get payment status'
+        };
+      }
+    } catch (error) {
+      console.error('Check payment status error:', error);
+      return {
+        success: false,
+        status: 500,
+        message: 'Internal error occurred'
+      };
     }
   }
 
@@ -255,7 +301,7 @@ export class PaymentService {
         throw new Error(`Failed to create transaction: ${transactionError.message}`);
       }
 
-      // Create payment link
+      // Create payment link via backend
       const paymentRequest: PaymentLinkRequest = {
         country_code: request.country_code,
         name: user.user_metadata?.full_name || user.email || 'User',
@@ -279,9 +325,6 @@ export class PaymentService {
           })
           .eq('id', transaction.id);
 
-        if (paymentResponse.message.includes('Authentication failed')) {
-          throw new Error('Payment system is not configured. Please contact support.');
-        }
         throw new Error(paymentResponse.message);
       }
 
