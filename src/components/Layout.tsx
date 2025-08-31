@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { getCurrentUser, logout } from '@/lib/auth';
 import Footer from './Footer';
-import CurrencySelector from './CurrencySelector';
+
 
 const Layout = () => {
   const openWhatsApp = () => {
@@ -94,7 +94,6 @@ const Layout = () => {
 
             {/* Desktop Auth/User Actions */}
             <div className="hidden md:flex items-center gap-3">
-              <CurrencySelector />
               {user ? (
                 <>
                   <Button
@@ -179,10 +178,7 @@ const Layout = () => {
                       )}
                     </nav>
 
-                    {/* Mobile Currency Selector */}
-                    <div className="mb-6">
-                      <CurrencySelector />
-                    </div>
+
 
                     {/* Mobile Auth/User Actions */}
                     <div className="mt-auto">

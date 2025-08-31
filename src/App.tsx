@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
-import { CurrencyProvider } from "./contexts/CurrencyContext";
+
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import BuyPage from "./pages/BuyPage";
@@ -150,17 +150,15 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <CurrencyProvider>
-          <BrowserRouter>
-            <AuthWrapper>
-              <TooltipProvider>
-                <AppRoutes />
-                <Toaster />
-                <Sonner />
-              </TooltipProvider>
-            </AuthWrapper>
-          </BrowserRouter>
-        </CurrencyProvider>
+        <BrowserRouter>
+          <AuthWrapper>
+            <TooltipProvider>
+              <AppRoutes />
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </AuthWrapper>
+        </BrowserRouter>
       </LanguageProvider>
     </QueryClientProvider>
   );

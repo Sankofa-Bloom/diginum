@@ -20,7 +20,6 @@ import {
   TrendingUp,
   History,
   ArrowLeft,
-  Globe,
   Flag
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';

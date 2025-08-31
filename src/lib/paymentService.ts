@@ -79,8 +79,8 @@ export class PaymentService {
       const email = import.meta.env.VITE_PAYMENT_EMAIL;
       const password = import.meta.env.VITE_PAYMENT_PASSWORD;
 
-      if (!email || !password) {
-        console.error('Payment API credentials not configured');
+      if (!email || !password || email === 'your_payment_api_email_here' || password === 'your_payment_api_password_here') {
+        console.error('Payment API credentials not configured. Please set VITE_PAYMENT_EMAIL and VITE_PAYMENT_PASSWORD in your .env file');
         return false;
       }
 
@@ -279,6 +279,9 @@ export class PaymentService {
           })
           .eq('id', transaction.id);
 
+        if (paymentResponse.message.includes('Authentication failed')) {
+          throw new Error('Payment system is not configured. Please contact support.');
+        }
         throw new Error(paymentResponse.message);
       }
 
