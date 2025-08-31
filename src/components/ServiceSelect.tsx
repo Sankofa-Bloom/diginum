@@ -42,7 +42,7 @@ const ServiceSelect: React.FC<ServiceSelectProps> = ({
       </div>
 
       <div className="grid gap-3 max-h-96 overflow-y-auto">
-        {filteredServices.map((service) => (
+        {Array.isArray(filteredServices) ? filteredServices.map((service) => (
           <Card
             key={service.id}
             className={`card-service transition-all ${
@@ -63,14 +63,18 @@ const ServiceSelect: React.FC<ServiceSelectProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-primary">
-                    ₣{service.price.toLocaleString()}
+                    ${service.price.toFixed(2)}
                   </div>
-                  <div className="text-xs text-muted-foreground">XAF</div>
+                  <div className="text-xs text-muted-foreground">USD</div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        ))}
+        )) : (
+          <div className="text-center py-8 text-muted-foreground">
+            No services available
+          </div>
+        )}
       </div>
 
       {filteredServices.length === 0 && (

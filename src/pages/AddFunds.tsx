@@ -241,14 +241,21 @@ const AddFunds = () => {
                 <SelectValue placeholder="Select country" />
               </SelectTrigger>
               <SelectContent>
-                {paymentService.getSupportedCountries().map((country) => (
+                {Array.isArray(paymentService.getSupportedCountries()) ? paymentService.getSupportedCountries().map((country) => (
                   <SelectItem key={country} value={country}>
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{getCountryFlag(country)}</span>
                       {getCountryName(country)}
                     </div>
                   </SelectItem>
-                ))}
+                )) : (
+                  <SelectItem value="US" disabled>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🇺🇸</span>
+                      United States
+                    </div>
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>

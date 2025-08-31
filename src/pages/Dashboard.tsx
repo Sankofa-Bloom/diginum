@@ -266,7 +266,7 @@ React.useEffect(() => {
                     </Button>
                   </div>
                 ) : (
-                  activeOrders.map((order) => (
+                  {Array.isArray(activeOrders) ? activeOrders.map((order) => (
                      <NumberCard
                        key={order.id}
                        order={order}
@@ -274,7 +274,11 @@ React.useEffect(() => {
                        onCancel={handleCancelOrder}
                        onRequestAnother={handleRequestAnotherSMS}
                      />
-                  ))
+                  )) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No active orders
+                    </div>
+                  )}
                 )}
               </TabsContent>
 
@@ -288,9 +292,13 @@ React.useEffect(() => {
                     </p>
                   </div>
                  ) : (
-                   completedOrders.map((order) => (
+                   {Array.isArray(completedOrders) ? completedOrders.map((order) => (
                      <NumberCard key={order.id} order={order} onRequestAnother={handleRequestAnotherSMS} />
-                   ))
+                   )) : (
+                     <div className="text-center py-8 text-muted-foreground">
+                       No completed orders
+                     </div>
+                   )}
                  )}
               </TabsContent>
 
@@ -304,9 +312,13 @@ React.useEffect(() => {
                     </p>
                   </div>
                  ) : (
-                   expiredOrders.map((order) => (
+                   {Array.isArray(expiredOrders) ? expiredOrders.map((order) => (
                      <NumberCard key={order.id} order={order} onRequestAnother={handleRequestAnotherSMS} />
-                   ))
+                   )) : (
+                     <div className="text-center py-8 text-muted-foreground">
+                       No expired orders
+                     </div>
+                   )}
                  )}
               </TabsContent>
             </Tabs>

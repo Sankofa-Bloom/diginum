@@ -272,7 +272,7 @@ const Buy = () => {
               Loading countries...
             </div>
           ) : (
-            countries.map((country) => (
+            {Array.isArray(countries) ? countries.map((country) => (
               <Card key={country.id} className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl mb-2">📞</div>
@@ -280,7 +280,11 @@ const Buy = () => {
                   <p className="text-sm text-muted-foreground">{country.code}</p>
                 </CardContent>
               </Card>
-            ))
+            )) : (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                No countries available
+              </div>
+            )}
           )}
         </div>
       </div>
@@ -389,7 +393,7 @@ const Buy = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {countries.map((country) => (
+                {Array.isArray(countries) ? countries.map((country) => (
                   <Card 
                     key={country.id} 
                     className="cursor-pointer hover:shadow-md transition-shadow"
@@ -401,7 +405,11 @@ const Buy = () => {
                       <p className="text-sm text-muted-foreground">{country.code}</p>
                     </CardContent>
                   </Card>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No countries available
+                  </div>
+                )}
               </div>
             )}
             
@@ -445,7 +453,7 @@ const Buy = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {filteredServices.map((service) => (
+                {Array.isArray(filteredServices) ? filteredServices.map((service) => (
                   <Card 
                     key={service.id} 
                     className={`cursor-pointer hover:shadow-md transition-shadow ${
@@ -470,7 +478,11 @@ const Buy = () => {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No services available
+                  </div>
+                )}
               </div>
             )}
             

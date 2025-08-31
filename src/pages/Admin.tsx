@@ -396,7 +396,7 @@ const Admin = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentTransactions.slice(0, 10).map((transaction) => (
+                  {Array.isArray(recentTransactions) ? recentTransactions.slice(0, 10).map((transaction) => (
                     <div key={transaction.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center gap-3">
                         {getTransactionTypeIcon(transaction.type)}
@@ -412,7 +412,11 @@ const Admin = () => {
                         {getStatusBadge(transaction.status)}
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      No transactions available
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -439,7 +443,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {recentTransactions.map((transaction) => (
+                    {Array.isArray(recentTransactions) ? recentTransactions.map((transaction) => (
                       <TableRow key={transaction.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -454,7 +458,13 @@ const Admin = () => {
                           {new Date(transaction.createdAt).toLocaleString()}
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No transactions available
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -485,7 +495,7 @@ const Admin = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {priceAdjustments.map((adjustment) => (
+                    {Array.isArray(priceAdjustments) ? priceAdjustments.map((adjustment) => (
                       <TableRow key={adjustment.id}>
                         <TableCell className="font-medium capitalize">{adjustment.service}</TableCell>
                         <TableCell>{adjustment.country}</TableCell>
@@ -539,7 +549,13 @@ const Admin = () => {
                           )}
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No price adjustments available
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

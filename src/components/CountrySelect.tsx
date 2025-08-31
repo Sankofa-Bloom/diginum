@@ -52,7 +52,7 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
               <span className="text-lg">{selectedCountry.flag}</span>
               <span>{selectedCountry.name}</span>
               <span className="text-muted-foreground">
-                (₣{selectedCountry.price.toLocaleString()})
+                (${selectedCountry.price.toFixed(2)})
               </span>
             </div>
           ) : (
@@ -67,7 +67,7 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
           <CommandList>
             <CommandEmpty>Aucun pays trouvé.</CommandEmpty>
             <CommandGroup>
-              {countries.map((country) => (
+              {Array.isArray(countries) ? countries.map((country) => (
                 <CommandItem
                   key={country.code}
                   value={country.code}
@@ -86,10 +86,14 @@ const CountrySelect: React.FC<CountrySelectProps> = ({
                   <span className="text-lg">{country.flag}</span>
                   <span className="flex-1">{country.name}</span>
                   <span className="text-sm text-muted-foreground">
-                    ₣{country.price.toLocaleString()}
+                    ${country.price.toFixed(2)}
                   </span>
                 </CommandItem>
-              ))}
+              )) : (
+                <CommandItem value="" disabled>
+                  No countries available
+                </CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>
