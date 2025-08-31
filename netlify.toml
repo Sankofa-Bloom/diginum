@@ -67,6 +67,23 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
+# Payment function redirects
+[[redirects]]
+  from = "/api/payments/create-link"
+  to = "/.netlify/functions/payments-create-link"
+  status = 200
+
+[[redirects]]
+  from = "/api/payments/status"
+  to = "/.netlify/functions/payments-status"
+  status = 200
+
+# Test payment function
+[[redirects]]
+  from = "/api/test-payment"
+  to = "/.netlify/functions/test-payment"
+  status = 200
+
 # Exchange rates endpoint redirect
 [[redirects]]
   from = "/exchange-rates"
