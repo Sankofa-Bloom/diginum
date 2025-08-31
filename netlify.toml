@@ -79,6 +79,12 @@
   to = "/.netlify/functions/update-exchange-rates"
   status = 200
 
+# Payment webhook redirect
+[[redirects]]
+  from = "/webhooks/payment"
+  to = "/.netlify/functions/payment-webhook"
+  status = 200
+
 # Swychr webhook redirect
 [[redirects]]
   from = "/webhooks/swychr"

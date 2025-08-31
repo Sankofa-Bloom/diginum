@@ -65,17 +65,21 @@ export interface AddFundsResponse {
 
 export class PaymentService {
   private backendUrl: string;
+  private accountPeBaseUrl: string;
 
   constructor() {
     // Use environment variable if set, otherwise use relative path for production
     this.backendUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+    // AccountPe API base URL
+    this.accountPeBaseUrl = 'https://api.accountpe.com/api/payin';
   }
 
   /**
-   * Create a payment link for adding funds
+   * Create a payment link using AccountPe API
    */
   async createPaymentLink(request: PaymentLinkRequest): Promise<PaymentLinkResponse> {
     try {
+      // Call the Netlify function which will proxy to AccountPe API
       const response = await fetch(`${this.backendUrl}/payments/create-link`, {
         method: 'POST',
         headers: {
@@ -86,7 +90,7 @@ export class PaymentService {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         return {
           success: true,
           data: data.data,
@@ -113,7 +117,7 @@ export class PaymentService {
   }
 
   /**
-   * Check payment status
+   * Check payment status using AccountPe API
    */
   async checkPaymentStatus(transactionId: string): Promise<PaymentStatusResponse> {
     try {
@@ -127,88 +131,7 @@ export class PaymentService {
 
       const data = await response.json();
 
-      if (response.ok && data.status === 200) {
-        return {
-          success: true,
-          data: data.data,
-          status: data.status,
-          message: data.message,
-          payment_status: this.mapPaymentStatus(data.data?.status)
-        };
-      } else {
-        return {
-          success: false,
-          status: data.status || response.status,
-          message: data.message || 'Failed to get payment status'
-        };
-      }
-    } catch (error) {
-      console.error('Check payment status error:', error);
-      return {
-        success: false,
-        status: 500,
-        message: 'Internal error occurred'
-      };
-    }
-  }
-
-  /**
-   * Create a payment link for adding funds
-   */
-  async createPaymentLink(request: PaymentLinkRequest): Promise<PaymentLinkResponse> {
-    try {
-      const response = await fetch(`${this.backendUrl}/payments/create-link`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(request),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return {
-          success: true,
-          data: data.data,
-          status: data.status,
-          message: data.message,
-          transaction_id: data.transaction_id,
-          payment_url: data.data?.payment_url || data.data?.url
-        };
-      } else {
-        return {
-          success: false,
-          status: data.status || response.status,
-          message: data.message || 'Failed to create payment link'
-        };
-      }
-    } catch (error) {
-      console.error('Create payment link error:', error);
-      return {
-        success: false,
-        status: 500,
-        message: 'Internal error occurred'
-      };
-    }
-  }
-
-  /**
-   * Check payment status
-   */
-  async checkPaymentStatus(transactionId: string): Promise<PaymentStatusResponse> {
-    try {
-      const response = await fetch(`${this.backendUrl}/payments/status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ transaction_id: transactionId }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.ok && data.success) {
         return {
           success: true,
           data: data.data,
@@ -252,7 +175,7 @@ export class PaymentService {
       const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const reference = `DEP_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Create transaction record
+      // Create transaction record in Supabase
       const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .insert({
@@ -277,13 +200,13 @@ export class PaymentService {
         throw new Error(`Failed to create transaction: ${transactionError.message}`);
       }
 
-      // Create payment link via backend
+      // Create payment link via AccountPe API
       const paymentRequest: PaymentLinkRequest = {
         country_code: request.country_code,
         name: user.user_metadata?.full_name || user.email || 'User',
         email: user.email || '',
         mobile: user.phone || undefined,
-        amount: Math.round(request.amount * 100), // Convert to smallest currency unit
+        amount: Math.round(request.amount * 100), // Convert to smallest currency unit (cents)
         transaction_id: transactionId,
         description: `Add funds to DigiNum account - ${request.amount} USD`,
         pass_digital_charge: false
@@ -635,7 +558,6 @@ export class PaymentService {
       case 'failed':
       case 'error':
         return 'failed';
-      case 'cancelled':
       case 'cancelled':
         return 'cancelled';
       default:

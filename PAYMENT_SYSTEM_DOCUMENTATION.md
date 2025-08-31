@@ -1,324 +1,312 @@
-# 🚀 DigiNum Payment System - AccountPe Integration
+# Payment System Documentation
 
-## 📋 Overview
+## Overview
 
-This document describes the complete payment system implementation for DigiNum using the **AccountPe API** for payment processing. The system provides a seamless way for users to add funds to their accounts and purchase services.
+The DigiNum payment system has been completely rebuilt to integrate with the AccountPe API for handling payment transactions. This system provides a secure and reliable way for users to add funds to their accounts and purchase services.
 
-## 🏗️ Architecture
+## Architecture
 
-### **Payment Flow**
+### Frontend Components
+- **AddFunds Component**: Handles user input for adding funds (country selection and amount)
+- **PaymentService**: Manages all payment-related API calls and business logic
+
+### Backend Services
+- **Netlify Functions**: Serverless functions that proxy requests to AccountPe API
+- **Supabase Database**: Stores transaction records and user balances
+- **AccountPe API**: External payment processor for creating payment links and checking status
+
+## API Integration
+
+### AccountPe API Endpoints
+
+#### 1. Create Payment Link
+- **Endpoint**: `POST /create_payment_links`
+- **Base URL**: `https://api.accountpe.com/api/payin`
+- **Required Fields**:
+  - `country_code`: ISO country code (e.g., 'US', 'NG', 'CM')
+  - `name`: Customer's full name
+  - `email`: Customer's email address
+  - `amount`: Amount in smallest currency unit (cents for USD)
+  - `transaction_id`: Unique transaction identifier
+  - `pass_digital_charge`: Boolean flag for digital charges
+
+#### 2. Check Payment Status
+- **Endpoint**: `POST /payment_link_status`
+- **Required Fields**:
+  - `transaction_id`: Transaction identifier to check
+
+### Netlify Function Endpoints
+
+#### 1. Create Payment Link
+- **Endpoint**: `POST /api/payments/create-link`
+- **Function**: `netlify/functions/api/payments/create-link.js`
+- **Functionality**: 
+  - Validates request data
+  - Calls AccountPe API
+  - Returns payment URL and transaction details
+  - Falls back to mock response in development/testing
+
+#### 2. Check Payment Status
+- **Endpoint**: `POST /api/payments/status`
+- **Function**: `netlify/functions/api/payments/status.js`
+- **Functionality**:
+  - Validates transaction ID
+  - Calls AccountPe API for status
+  - Returns current payment status
+  - Falls back to mock response in development/testing
+
+#### 3. Payment Webhook
+- **Endpoint**: `POST /webhooks/payment`
+- **Function**: `netlify/functions/payment-webhook.js`
+- **Functionality**:
+  - Receives real-time payment updates from AccountPe
+  - Updates transaction status in database
+  - Credits user account upon successful payment
+  - Handles various payment statuses
+
+## Payment Flow
+
+### 1. Add Funds Process
 ```
-User Request → Payment Link Creation → AccountPe Processing → Payment Completion → Account Credit → Success
+User Input → Validation → Create Transaction Record → Call AccountPe API → Return Payment Link
 ```
 
-### **Components**
-1. **PaymentService** - AccountPe API integration
-2. **AddFunds Page** - User interface for adding funds
-3. **PaymentSuccess Page** - Payment confirmation and verification
-4. **Transaction Management** - Database operations and tracking
-5. **Balance Management** - User account balance handling
-
-## 💳 Backend API Integration
-
-### **API Endpoints**
-- **Base URL**: Backend API (e.g., `http://localhost:3000/api`)
-- **Create Payment**: `/payments/create-link` (POST)
-- **Check Status**: `/payments/status` (POST)
-
-### **Architecture**
-1. **Frontend**: Sends payment requests to backend
-2. **Backend**: Handles AccountPe API authentication and communication
-3. **Security**: API credentials stored securely on backend
-4. **Proxy**: Backend acts as proxy for external payment APIs
-
-### **Payment Link Creation**
-```typescript
-const paymentRequest = {
-  country_code: "NG",           // Country code (required)
-  name: "John Doe",             // Customer name (required)
-  email: "john@example.com",    // Customer email (required)
-  mobile: "+2348012345678",     // Customer mobile (optional)
-  amount: 10000,                // Amount in smallest currency unit (required)
-  transaction_id: "TXN_123",    // Unique transaction ID (required)
-  description: "Payment for...", // Payment description (optional)
-  pass_digital_charge: false    // Digital charge handling (required)
-};
+### 2. Payment Processing
+```
+User Clicks Payment Link → AccountPe Payment Page → Payment Processing → Webhook Notification → Update Database → Credit Account
 ```
 
-### **Payment Status Check**
-```typescript
-const statusRequest = {
-  transaction_id: "TXN_123"     // Transaction ID to check
-};
+### 3. Status Checking
+```
+Frontend Request → Netlify Function → AccountPe API → Return Status → Update UI
 ```
 
-## 🔐 Security Features
+## Database Schema
 
-### **Authentication**
-- **Backend Proxy**: API credentials stored securely on backend
-- **No Frontend Exposure**: Sensitive data never exposed to client
-- **Secure Communication**: HTTPS communication between frontend and backend
-
-### **Data Validation**
-- **Input Sanitization**: All user inputs validated
-- **Amount Limits**: Configurable payment limits
-- **Country Validation**: Supported country codes only
-
-### **Transaction Security**
-- **Unique References**: Non-repeating transaction references
-- **Audit Trail**: Complete transaction history
-- **User Isolation**: Row-level security in database
-
-## 💰 Add Funds Functionality
-
-### **Features**
-- **Country Selection**: 20+ supported countries with flags
-- **Currency Support**: USD only for simplified operations
-- **Amount Flexibility**: User-defined payment amounts
-- **Real-time Processing**: Instant payment link creation
-- **Transaction History**: Complete payment records
-
-### **Supported Countries**
-- **Africa**: CM (Cameroon), NG (Nigeria), GH (Ghana), KE (Kenya), SN (Senegal), CI (Ivory Coast), UG (Uganda), TZ (Tanzania), ZA (South Africa), EG (Egypt)
-- **Global**: US, GB, EU, CA, AU, IN, CN, JP, BR, MX
-
-### **Supported Currencies**
-- **USD Only**: All transactions processed in US Dollars for consistency and simplicity
-
-## 📊 Transaction Processing
-
-### **Transaction Types**
-- **Deposit**: Adding funds to account
-- **Purchase**: Buying services
-- **Refund**: Service refunds (future feature)
-
-### **Transaction Statuses**
-- **Pending**: Payment initiated, waiting for completion
-- **Completed**: Payment successful, account credited
-- **Failed**: Payment failed, no account credit
-- **Cancelled**: Payment cancelled by user
-
-### **Database Schema**
+### Transactions Table
 ```sql
 CREATE TABLE transactions (
-    id UUID PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id),
-    type VARCHAR(20) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    currency VARCHAR(3) NOT NULL,
-    status VARCHAR(20) NOT NULL,
-    reference VARCHAR(100) UNIQUE NOT NULL,
-    description TEXT,
-    metadata JSONB,
-    transaction_id VARCHAR(100),
-    payment_method VARCHAR(50),
-    country_code VARCHAR(2),
-    customer_name VARCHAR(255),
-    customer_email VARCHAR(255),
-    customer_mobile VARCHAR(20),
-    created_at TIMESTAMP WITH TIME ZONE,
-    updated_at TIMESTAMP WITH TIME ZONE
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  type VARCHAR(20) NOT NULL, -- 'deposit', 'purchase', 'refund'
+  amount DECIMAL(10,2) NOT NULL,
+  currency VARCHAR(3) DEFAULT 'USD',
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'completed', 'failed', 'cancelled'
+  reference VARCHAR(100) UNIQUE NOT NULL,
+  description TEXT,
+  transaction_id VARCHAR(100) UNIQUE NOT NULL,
+  country_code VARCHAR(2),
+  customer_name VARCHAR(255),
+  customer_email VARCHAR(255),
+  customer_mobile VARCHAR(20),
+  metadata JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-## 🎯 User Experience
-
-### **Add Funds Flow**
-1. **Select Country**: Choose from supported countries with flags
-2. **Enter Amount**: Specify payment amount in USD
-3. **Add Description**: Optional transaction note
-4. **Create Payment**: Generate payment link
-5. **Complete Payment**: Redirect to payment page
-6. **Confirmation**: Payment success/verification
-
-### **Transaction History**
-- **Real-time Updates**: Live transaction status
-- **Detailed Records**: Complete payment information
-- **Search & Filter**: Easy transaction lookup
-- **Export Options**: Download transaction data
-
-## 🛠️ Implementation Details
-
-### **Frontend Components**
-- **AddFunds.tsx**: Main add funds interface
-- **PaymentSuccess.tsx**: Payment confirmation page
-- **PaymentService**: API integration and business logic
-
-### **Backend Integration**
-- **AccountPe API**: Direct API integration
-- **Supabase**: Database and authentication
-- **Transaction Management**: Business logic implementation
-
-### **Environment Variables**
-```bash
-# Backend API Configuration
-VITE_API_BASE_URL=http://localhost:3000/api
-```
-
-## 🚀 Getting Started
-
-### **1. Environment Setup**
-```bash
-# Copy environment template
-cp env.template .env
-
-# Set your backend API URL
-VITE_API_BASE_URL=http://localhost:3000/api
-```
-
-### **2. Database Setup**
+### User Balances Table
 ```sql
--- Run the transactions table creation script
-\i create_transactions_table.sql
-```
-
-### **3. Install Dependencies**
-```bash
-npm install
-```
-
-### **4. Start Development**
-```bash
-npm run dev
-```
-
-## 📱 Usage Examples
-
-### **Adding Funds**
-```typescript
-import { paymentService } from '@/lib/paymentService';
-
-const response = await paymentService.addFunds({
-  amount: 100,
-  country_code: 'US',
-  description: 'Add funds to account'
-});
-
-if (response.success) {
-  // Redirect to payment URL
-  window.open(response.payment_url, '_blank');
-}
-```
-
-### **Processing Service Purchase**
-```typescript
-const result = await paymentService.processServicePurchase(
-  serviceId, 
-  countryId
+CREATE TABLE user_balances (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) UNIQUE,
+  currency VARCHAR(3) DEFAULT 'USD',
+  balance DECIMAL(10,2) DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
-if (result.success) {
-  // Service purchased successfully
-  console.log('Order ID:', result.orderId);
-}
 ```
 
-### **Checking Payment Status**
-```typescript
-const status = await paymentService.checkPaymentStatus(transactionId);
-console.log('Payment status:', status.payment_status);
-```
+## Configuration
 
-## 🔍 Testing
+### Environment Variables
 
-### **Test Payment Flow**
-1. Navigate to `/add-funds`
-2. Select country (e.g., Nigeria)
-3. Enter test amount (e.g., ₦1000)
-4. Submit payment request
-5. Verify payment link creation
-6. Test payment status checking
-
-### **Test Different Countries**
-- **Cameroon**: Country code CM (USD payments)
-- **Nigeria**: Country code NG (USD payments)
-- **Ghana**: Country code GH (USD payments)
-- **United States**: Country code US (USD payments)
-
-## 📈 Monitoring & Analytics
-
-### **Payment Metrics**
-- Success rates by country
-- Currency distribution
-- Transaction volumes
-- Processing times
-
-### **User Analytics**
-- Payment patterns
-- Country preferences
-- Amount distributions
-- Conversion rates
-
-## 🚨 Troubleshooting
-
-### **Common Issues**
-1. **Authentication Failed**: Check API credentials
-2. **Payment Link Creation Failed**: Verify required fields
-3. **Status Check Failed**: Ensure transaction ID is valid
-4. **Database Errors**: Check Supabase connection
-
-### **Debug Mode**
+#### Frontend (.env)
 ```bash
-# Enable debug logging
-VITE_DEBUG_MODE=true
-VITE_LOG_LEVEL=debug
+VITE_API_BASE_URL=https://diginum.netlify.app/api
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-### **API Response Codes**
-- **200**: Success
-- **400**: Invalid request
-- **401**: Authentication failed
-- **404**: Resource not found
-- **500**: Internal server error
+#### Netlify Functions
+```bash
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+ACCOUNTPE_API_KEY=your_accountpe_api_key
+NODE_ENV=production
+TEST_MODE=false
+```
 
-## 🔮 Future Enhancements
+### Netlify Configuration
+```toml
+# API redirects
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
-### **Planned Features**
-- **Webhook Support**: Real-time payment notifications
-- **Recurring Payments**: Subscription billing
-- **Payment Plans**: Installment payments
-- **Advanced Analytics**: Business intelligence
-- **Multi-User Accounts**: Business accounts
+# Payment webhook
+[[redirects]]
+  from = "/webhooks/payment"
+  to = "/.netlify/functions/payment-webhook"
+  status = 200
+```
 
-### **API Improvements**
-- **Rate Limiting**: Prevent API abuse
-- **Caching**: Improve response times
-- **Retry Logic**: Handle temporary failures
-- **Fallback Options**: Alternative payment methods
+## Security Features
 
-## 📞 Support
+### 1. Authentication
+- All payment endpoints require valid Supabase JWT tokens
+- User authentication verified before processing payments
 
-### **Documentation**
-- **API Reference**: AccountPe integration guide
-- **Implementation Guide**: Step-by-step setup
-- **Troubleshooting**: Common issues and solutions
+### 2. Data Validation
+- Input validation on both frontend and backend
+- Required field validation for AccountPe API calls
+- Amount validation to prevent negative or zero amounts
 
-### **Contact**
-- **Technical Support**: development@diginum.com
-- **API Issues**: api@diginum.com
-- **Business Inquiries**: business@diginum.com
+### 3. Transaction Security
+- Unique transaction IDs generated for each payment
+- Reference numbers for internal tracking
+- Metadata storage for audit trails
 
----
+### 4. Webhook Security
+- Webhook endpoint for real-time updates
+- Secure database operations with service role key
+- Error handling and logging for debugging
 
-## ✅ Implementation Status
+## Error Handling
 
-- [x] AccountPe API Integration
-- [x] Add Funds Functionality
-- [x] Transaction Processing
-- [x] Payment Verification
-- [x] Multi-Country Support
-- [x] Multi-Currency Support
-- [x] Database Schema
-- [x] User Interface
-- [x] Error Handling
-- [x] Documentation
+### 1. API Failures
+- Graceful fallback to mock responses in development
+- Comprehensive error logging
+- User-friendly error messages
 
-**The payment system is now fully implemented and ready for production use with AccountPe!** 🎉
+### 2. Database Errors
+- Transaction rollback on failures
+- Detailed error logging
+- Fallback mechanisms for critical operations
 
-## 🔗 API Documentation Reference
+### 3. Network Issues
+- Timeout handling (30 seconds)
+- Retry mechanisms for failed requests
+- Offline fallback options
 
-This implementation uses a backend proxy approach:
-- **Frontend**: Communicates with backend API endpoints
-- **Backend**: Handles AccountPe API integration securely
-- **Security**: API credentials stored on backend only
-- **Architecture**: Monorepo with separated concerns
+## Development and Testing
+
+### 1. Mock Mode
+- Enable with `TEST_MODE=true` environment variable
+- Provides mock responses when AccountPe API is unavailable
+- Useful for development and testing
+
+### 2. Local Development
+- Use local backend with `VITE_API_BASE_URL=http://localhost:3000/api`
+- Test with local Supabase instance
+- Mock payment responses for development
+
+### 3. Testing
+- Unit tests for payment service
+- Integration tests for Netlify functions
+- End-to-end payment flow testing
+
+## Monitoring and Logging
+
+### 1. Function Logs
+- Comprehensive logging in all Netlify functions
+- Transaction tracking and debugging
+- Error logging with context
+
+### 2. Database Monitoring
+- Transaction status tracking
+- Balance updates monitoring
+- Audit trail maintenance
+
+### 3. API Monitoring
+- AccountPe API response monitoring
+- Payment success/failure rates
+- Response time tracking
+
+## Deployment
+
+### 1. Netlify Deployment
+- Automatic deployment from main branch
+- Function deployment with dependencies
+- Environment variable configuration
+
+### 2. Production Setup
+- Configure AccountPe API credentials
+- Set production environment variables
+- Enable webhook endpoints
+
+### 3. Monitoring
+- Set up logging and monitoring
+- Configure error alerts
+- Monitor payment success rates
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Payment Link Creation Fails
+- Check AccountPe API credentials
+- Verify required fields are provided
+- Check network connectivity
+
+#### 2. Webhook Not Received
+- Verify webhook URL configuration
+- Check function deployment status
+- Monitor function logs
+
+#### 3. Balance Not Updated
+- Check transaction status in database
+- Verify webhook processing
+- Check database permissions
+
+### Debug Steps
+
+1. **Check Function Logs**: Monitor Netlify function logs for errors
+2. **Verify API Calls**: Test AccountPe API endpoints directly
+3. **Database Queries**: Check transaction and balance tables
+4. **Environment Variables**: Verify all required variables are set
+
+## Future Enhancements
+
+### 1. Additional Payment Methods
+- Credit card processing
+- Bank transfer integration
+- Mobile money services
+
+### 2. Enhanced Security
+- Webhook signature verification
+- Rate limiting
+- Fraud detection
+
+### 3. Analytics and Reporting
+- Payment analytics dashboard
+- Transaction reporting
+- Revenue tracking
+
+### 4. Multi-currency Support
+- Support for additional currencies
+- Real-time exchange rates
+- Currency conversion
+
+## Support
+
+For technical support or questions about the payment system:
+
+1. Check the function logs in Netlify dashboard
+2. Review database transactions and balances
+3. Test API endpoints with Postman or similar tools
+4. Contact the development team for complex issues
+
+## Changelog
+
+### Version 2.0.0 (Current)
+- Complete rebuild with AccountPe API integration
+- Real-time webhook processing
+- Enhanced security and error handling
+- Comprehensive logging and monitoring
+
+### Version 1.0.0 (Previous)
+- Basic payment functionality
+- Mock payment processing
+- Limited error handling

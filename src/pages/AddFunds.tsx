@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -18,7 +19,8 @@ import {
   DollarSign,
   TrendingUp,
   History,
-  ArrowLeft
+  ArrowLeft,
+  Flag
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';
 import { paymentService, Transaction } from '@/lib/paymentService';
@@ -36,6 +38,7 @@ const AddFunds = () => {
 
   // Form states
   const [amount, setAmount] = useState(state?.amount || 10);
+  const [countryCode, setCountryCode] = useState('US');
   
   // UI states
   const [isLoading, setIsLoading] = useState(false);
@@ -116,11 +119,16 @@ const AddFunds = () => {
       return;
     }
 
+    if (!countryCode) {
+      toast.error('Please select a country');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await paymentService.addFunds({
         amount,
-        description: `Add funds - ${amount} USD`
+        country_code: countryCode
       });
 
       if (response.success) {
@@ -149,6 +157,10 @@ const AddFunds = () => {
   const handleBackToAddFunds = () => {
     setShowPaymentRedirect(false);
     setPaymentUrl('');
+  };
+
+  const handleCountryChange = (newCountry: string) => {
+    setCountryCode(newCountry);
   };
 
   const getCountryFlag = (countryCode: string) => {
@@ -310,26 +322,47 @@ const AddFunds = () => {
             <CardHeader>
               <CardTitle>Add Funds to Account</CardTitle>
               <CardDescription>
-                Enter the amount you want to add to your account
+                Choose your country and amount to add funds
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Enter amount"
-                  value={amount}
-                  onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                  min="1"
-                  step="0.01"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Select value={countryCode} onValueChange={handleCountryChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {paymentService.getSupportedCountries().map((country) => (
+                        <SelectItem key={country} value={country}>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getCountryFlag(country)}</span>
+                            {getCountryName(country)}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="Enter amount"
+                    value={amount}
+                    onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                    min="1"
+                    step="0.01"
+                  />
+                </div>
               </div>
 
               <Button 
                 onClick={handleAddFunds}
-                disabled={isLoading || !amount || amount <= 0}
+                disabled={isLoading || !amount || amount <= 0 || !countryCode}
                 className="w-full"
                 size="lg"
               >
