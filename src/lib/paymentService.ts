@@ -67,7 +67,9 @@ export class PaymentService {
   private backendUrl: string;
 
   constructor() {
-    this.backendUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+    // In development, default to localhost:3000, in production use relative path
+    this.backendUrl = import.meta.env.VITE_API_BASE_URL || 
+      (import.meta.env.DEV ? 'http://localhost:3000/api' : '/api');
   }
 
   /**
@@ -156,30 +158,17 @@ export class PaymentService {
    */
   async createPaymentLink(request: PaymentLinkRequest): Promise<PaymentLinkResponse> {
     try {
-      // Ensure we have an auth token
-      if (!this.authToken) {
-        const authenticated = await this.authenticate();
-        if (!authenticated) {
-          return {
-            success: false,
-            status: 401,
-            message: 'Authentication failed'
-          };
-        }
-      }
-
-      const response = await fetch(`${this.baseUrl}/create_payment_links`, {
+      const response = await fetch(`${this.backendUrl}/payments/create-link`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.authToken}`,
         },
         body: JSON.stringify(request),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.status === 200) {
+      if (response.ok) {
         return {
           success: true,
           data: data.data,
@@ -210,29 +199,17 @@ export class PaymentService {
    */
   async checkPaymentStatus(transactionId: string): Promise<PaymentStatusResponse> {
     try {
-      if (!this.authToken) {
-        const authenticated = await this.authenticate();
-        if (!authenticated) {
-          return {
-            success: false,
-            status: 401,
-            message: 'Authentication failed'
-          };
-        }
-      }
-
-      const response = await fetch(`${this.baseUrl}/payment_link_status`, {
+      const response = await fetch(`${this.backendUrl}/payments/status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.authToken}`,
         },
         body: JSON.stringify({ transaction_id: transactionId }),
       });
 
       const data = await response.json();
 
-      if (response.ok && data.status === 200) {
+      if (response.ok) {
         return {
           success: true,
           data: data.data,
