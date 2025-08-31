@@ -11,8 +11,7 @@ import {
   DollarSign, 
   ArrowLeft,
   Wallet,
-  CreditCard,
-  CheckCircle
+  CreditCard
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';
 import { paymentService } from '@/lib/paymentService';
@@ -36,10 +35,6 @@ const AddFunds = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
-  
-  // Payment states
-  const [paymentUrl, setPaymentUrl] = useState('');
-  const [showPaymentRedirect, setShowPaymentRedirect] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -93,32 +88,21 @@ const AddFunds = () => {
         country_code: countryCode
       });
 
-      if (response.success) {
-        toast.success('Payment link created successfully!');
-        setPaymentUrl(response.payment_url);
-        setShowPaymentRedirect(true);
+      if (response.success && response.payment_url) {
+        // Directly redirect to the payment page
+        window.open(response.payment_url, '_blank');
+        toast.success('Redirecting to payment page...');
         
-        // Update balance
+        // Update balance after successful redirect
         await loadUserBalance();
       } else {
-        toast.error(response.message || 'Failed to create payment link');
+        toast.error(response.message || 'Failed to create payment');
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to add funds');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handlePaymentRedirect = () => {
-    if (paymentUrl) {
-      window.open(paymentUrl, '_blank');
-    }
-  };
-
-  const handleBackToAddFunds = () => {
-    setShowPaymentRedirect(false);
-    setPaymentUrl('');
   };
 
   const handleCountryChange = (newCountry: string) => {
@@ -164,42 +148,6 @@ const AddFunds = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (showPaymentRedirect) {
-    return (
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <Card className="text-center">
-          <CardHeader>
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-            <CardTitle>Payment Link Ready!</CardTitle>
-            <CardDescription>
-              Click below to complete your payment securely
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Button 
-              onClick={handlePaymentRedirect}
-              className="w-full"
-              size="lg"
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              Complete Payment
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleBackToAddFunds}
-              className="w-full"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Add More Funds
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -287,12 +235,12 @@ const AddFunds = () => {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Payment...
+                Redirecting to Payment...
               </>
             ) : (
               <>
-                <DollarSign className="mr-2 h-4 w-4" />
-                Add ${amount.toFixed(2)}
+                <CreditCard className="mr-2 h-4 w-4" />
+                Pay ${amount.toFixed(2)}
               </>
             )}
           </Button>
