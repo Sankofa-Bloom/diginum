@@ -4,6 +4,11 @@
 // API configuration - Force production URL for netlify.app domain
 // This ensures we never use localhost in production, regardless of env vars
 const getApiBaseUrl = () => {
+  // If running on Vercel, route API calls to Netlify functions
+  if (typeof window !== 'undefined' && window.location.origin.includes('vercel.app')) {
+    return 'https://diginum.netlify.app/api';
+  }
+
   // Force production URL if we're on netlify.app domain
   if (typeof window !== 'undefined' && window.location.origin.includes('netlify.app')) {
     return '/api';
