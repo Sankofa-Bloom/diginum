@@ -127,55 +127,46 @@ const Buy = () => {
       console.log('Loading countries from API... (attempt', retryCount + 1, ')');
       const response = await apiClient.get('/countries');
       console.log('Countries API response:', response);
+      console.log('Response type:', typeof response);
+      console.log('Response keys:', response && typeof response === 'object' ? Object.keys(response) : 'N/A');
       
-      // Ensure response is an array
+      // Handle different response formats
+      let countriesData = [];
+      
       if (Array.isArray(response)) {
-        setCountries(response);
-        console.log('Countries loaded successfully:', response.length, 'countries');
+        countriesData = response;
+      } else if (response && typeof response === 'object') {
+        // Check common response structures
+        if (Array.isArray(response.data)) {
+          countriesData = response.data;
+        } else if (Array.isArray(response.countries)) {
+          countriesData = response.countries;
+        } else if (Array.isArray(response.result)) {
+          countriesData = response.result;
+        } else {
+          console.log('Response structure:', JSON.stringify(response, null, 2));
+          throw new Error('Invalid response format: no array found in response');
+        }
       } else {
-        throw new Error('Invalid response format: expected array');
+        throw new Error('Invalid response format: expected object or array');
       }
-    } catch (error) {
+      
+      setCountries(countriesData);
+      console.log('Countries loaded successfully:', countriesData.length, 'countries');
+    } catch (error: any) {
       console.error('Failed to load countries:', error);
       console.error('Error details:', error.response?.data || error.message);
       
       // Retry once if it's a network error
-      if (retryCount === 0 && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'))) {
+      if (retryCount === 0 && (error.code === 'NETWORK_ERROR' || (typeof error.message === 'string' && error.message.includes('Network Error')))) {
         console.log('Retrying countries API call...');
         setTimeout(() => loadCountries(1), 1000);
         return;
       }
       
-      toast.error('Failed to load countries. Using fallback data.');
-      
-      // Set fallback countries for development
-      const fallbackCountries = [
-        { id: '0', name: 'Russia', code: '+7' },
-        { id: '1', name: 'Ukraine', code: '+380' },
-        { id: '2', name: 'Kazakhstan', code: '+7' },
-        { id: '3', name: 'China', code: '+86' },
-        { id: '4', name: 'Philippines', code: '+63' },
-        { id: '5', name: 'Myanmar', code: '+95' },
-        { id: '6', name: 'Indonesia', code: '+62' },
-        { id: '7', name: 'Malaysia', code: '+60' },
-        { id: '8', name: 'Kenya', code: '+254' },
-        { id: '9', name: 'Tanzania', code: '+255' },
-        { id: '10', name: 'Vietnam', code: '+84' },
-        { id: '11', name: 'Kyrgyzstan', code: '+996' },
-        { id: '12', name: 'USA (Virtual)', code: '+1' },
-        { id: '13', name: 'Israel', code: '+972' },
-        { id: '14', name: 'Hong Kong (China)', code: '+852' },
-        { id: '15', name: 'Poland', code: '+48' },
-        { id: '16', name: 'England (UK)', code: '+44' },
-        { id: '17', name: 'Madagascar', code: '+261' },
-        { id: '18', name: 'Congo', code: '+242' },
-        { id: '19', name: 'Nigeria', code: '+234' },
-        { id: '20', name: 'Macau', code: '+853' },
-        { id: '21', name: 'Egypt', code: '+20' },
-        { id: '40', name: 'Cameroon', code: '+237' }
-      ];
-      setCountries(fallbackCountries);
-      console.log('Using fallback countries:', fallbackCountries.length, 'countries');
+      // Do not use fallback data; show empty list
+      setCountries([]);
+      toast.error('Failed to load countries.');
     } finally {
       setLoadingCountries(false);
     }
