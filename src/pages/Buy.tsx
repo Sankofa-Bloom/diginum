@@ -75,6 +75,11 @@ const Buy = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   
+  // Debug countries state
+  useEffect(() => {
+    console.log('Countries state updated:', countries);
+  }, [countries]);
+  
   // Filtered services based on selected country
   const filteredServices = services.filter(service => 
     serviceSearch.trim() === '' || 
@@ -119,11 +124,41 @@ const Buy = () => {
   const loadCountries = async () => {
     setLoadingCountries(true);
     try {
+      console.log('Loading countries from API...');
       const response = await apiClient.get('/countries');
+      console.log('Countries API response:', response);
       setCountries(response);
     } catch (error) {
       console.error('Failed to load countries:', error);
+      console.error('Error details:', error.response?.data || error.message);
       toast.error('Failed to load countries. Please try again.');
+      
+      // Set fallback countries for development
+      const fallbackCountries = [
+        { id: '0', name: 'Russia', code: '+7' },
+        { id: '1', name: 'Ukraine', code: '+380' },
+        { id: '2', name: 'Kazakhstan', code: '+7' },
+        { id: '3', name: 'China', code: '+86' },
+        { id: '4', name: 'Philippines', code: '+63' },
+        { id: '5', name: 'Myanmar', code: '+95' },
+        { id: '6', name: 'Indonesia', code: '+62' },
+        { id: '7', name: 'Malaysia', code: '+60' },
+        { id: '8', name: 'Kenya', code: '+254' },
+        { id: '9', name: 'Tanzania', code: '+255' },
+        { id: '10', name: 'Vietnam', code: '+84' },
+        { id: '11', name: 'Kyrgyzstan', code: '+996' },
+        { id: '12', name: 'USA (Virtual)', code: '+1' },
+        { id: '13', name: 'Israel', code: '+972' },
+        { id: '14', name: 'Hong Kong (China)', code: '+852' },
+        { id: '15', name: 'Poland', code: '+48' },
+        { id: '16', name: 'England (UK)', code: '+44' },
+        { id: '17', name: 'Madagascar', code: '+261' },
+        { id: '18', name: 'Congo', code: '+242' },
+        { id: '19', name: 'Nigeria', code: '+234' },
+        { id: '20', name: 'Macau', code: '+853' },
+        { id: '21', name: 'Egypt', code: '+20' }
+      ];
+      setCountries(fallbackCountries);
     } finally {
       setLoadingCountries(false);
     }

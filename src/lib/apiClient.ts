@@ -32,8 +32,12 @@ apiClient.interceptors.request.use(async (config) => {
 });
 
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    console.log('API Response:', response.data);
+    return response.data;
+  },
   (error) => {
+    console.error('API Error:', error);
     if (error.response?.status === 401) {
       // Handle unauthorized globally
     }
