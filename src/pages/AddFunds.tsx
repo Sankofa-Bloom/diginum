@@ -5,22 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Loader2, 
   DollarSign, 
   ArrowLeft,
   Wallet,
   CreditCard,
-  Info
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { getCurrentUser } from '@/lib/auth';
-import { paymentService, CurrencyConversionResponse } from '@/lib/paymentService';
 
 interface LocationState {
   orderId?: string;
   amount?: number;
   serviceTitle?: string;
+}
+
+interface PaymentRequest {
+  amount: number;
+  name: string;
+  email: string;
+  mobile?: string;
+  description?: string;
+}
+
+interface PaymentResponse {
+  success: boolean;
+  data?: {
+    payment_url: string;
+    transaction_id: string;
+  };
+  message: string;
 }
 
 const AddFunds = () => {
@@ -30,33 +46,26 @@ const AddFunds = () => {
 
   // Form states
   const [amount, setAmount] = useState(state?.amount || 10);
-  const [countryCode, setCountryCode] = useState('NG');
+  const [user, setUser] = useState<any>(null);
   
   // UI states
   const [isLoading, setIsLoading] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
-  
-  // Currency conversion states
-  const [conversionData, setConversionData] = useState<CurrencyConversionResponse | null>(null);
-  const [conversionLoading, setConversionLoading] = useState(false);
+  const [isCreatingPayment, setIsCreatingPayment] = useState(false);
+
+  // Quick amount buttons
+  const quickAmounts = [5, 10, 25, 50, 100];
 
   useEffect(() => {
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (amount > 0 && countryCode) {
-      calculateCurrencyConversion();
-    } else {
-      setConversionData(null);
-    }
-  }, [amount, countryCode]);
-
   const checkAuth = async () => {
     try {
-      const user = await getCurrentUser();
-      if (user) {
+      const currentUser = await getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
         setIsAuthenticated(true);
         await loadUserBalance();
       } else {
@@ -64,6 +73,7 @@ const AddFunds = () => {
         navigate('/login', { state: { from: '/add-funds' } });
       }
     } catch (error) {
+      console.error('Auth check error:', error);
       setIsAuthenticated(false);
       navigate('/login', { state: { from: '/add-funds' } });
     }
@@ -71,33 +81,71 @@ const AddFunds = () => {
 
   const loadUserBalance = async () => {
     try {
-      const balance = await paymentService.getUserBalance();
-      setCurrentBalance(balance);
+      // For now, we'll use a simple balance from localStorage or default to 0
+      // In a real app, this would come from your backend
+      const balance = localStorage.getItem('user_balance');
+      setCurrentBalance(balance ? parseFloat(balance) : 0);
     } catch (error) {
       console.error('Failed to load balance:', error);
+      setCurrentBalance(0);
     }
   };
 
-  const calculateCurrencyConversion = async () => {
-    if (amount <= 0 || !countryCode) return;
-    
-    setConversionLoading(true);
+  const createPaymentLink = async (paymentData: PaymentRequest): Promise<PaymentResponse> => {
     try {
-      const response = await paymentService.getCurrencyConversion({
-        amount,
-        country_code: countryCode
+      // Generate unique transaction ID
+      const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Prepare payment request according to Swychr API
+      const requestBody = {
+        country_code: 'CM', // Default to Cameroon as per your requirements
+        name: paymentData.name,
+        email: paymentData.email,
+        mobile: paymentData.mobile,
+        amount: Math.round(paymentData.amount * 100), // Convert to cents
+        transaction_id: transactionId,
+        description: paymentData.description || `Add funds to DigiNum account - $${paymentData.amount} USD`,
+        pass_digital_charge: false
+      };
+
+      // Call the Netlify function which will proxy to Swychr API
+      const response = await fetch('/api/payments/create-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       });
-      setConversionData(response);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.success && data.data?.payment_url) {
+        return {
+          success: true,
+          data: {
+            payment_url: data.data.payment_url,
+            transaction_id: transactionId
+          },
+          message: 'Payment link created successfully'
+        };
+      } else {
+        throw new Error(data.message || 'Failed to create payment link');
+      }
     } catch (error) {
-      console.error('Failed to calculate currency conversion:', error);
-      setConversionData(null);
-    } finally {
-      setConversionLoading(false);
+      console.error('Create payment link error:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to create payment link'
+      };
     }
   };
 
   const handleAddFunds = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       toast.error('Please log in to continue');
       return;
     }
@@ -107,66 +155,52 @@ const AddFunds = () => {
       return;
     }
 
-    if (!countryCode) {
-      toast.error('Please select a country');
+    if (amount < 1) {
+      toast.error('Minimum amount is $1 USD');
       return;
     }
 
-    setIsLoading(true);
+    setIsCreatingPayment(true);
     try {
-      const response = await paymentService.addFunds({
+      const paymentData: PaymentRequest = {
         amount,
-        country_code: countryCode
-      });
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+        mobile: user.phone || undefined,
+        description: `Add funds to DigiNum account - $${amount} USD`
+      };
 
-      if (response.success && response.payment_url) {
-        // Directly redirect to the payment page
-        window.open(response.payment_url, '_blank');
+      const response = await createPaymentLink(paymentData);
+
+      if (response.success && response.data?.payment_url) {
+        // Store transaction ID for later verification
+        localStorage.setItem('pending_transaction', response.data.transaction_id);
+        
         toast.success('Redirecting to payment page...');
         
-        // Update balance after successful redirect
-        await loadUserBalance();
+        // Open payment page in new tab
+        window.open(response.data.payment_url, '_blank');
+        
+        // Show success message
+        toast.success('Payment page opened in new tab. Complete payment to add funds to your account.');
+        
+        // Navigate back to dashboard after a short delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
       } else {
-        toast.error(response.message || 'Failed to create payment');
+        toast.error(response.message || 'Failed to create payment link');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to add funds');
+      console.error('Add funds error:', error);
+      toast.error(error.message || 'Failed to add funds. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsCreatingPayment(false);
     }
   };
 
-  const handleCountryChange = (newCountry: string) => {
-    setCountryCode(newCountry);
-  };
-
-  const getCountryFlag = (countryCode: string) => {
-    // Convert country code to flag emoji
-    const codePoints = countryCode
-      .toUpperCase()
-      .split('')
-      .map(char => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
-  const getCountryName = (countryCode: string) => {
-    const countryNames: Record<string, string> = {
-      'CM': 'Cameroon',
-      'NG': 'Nigeria',
-      'GH': 'Ghana',
-      'KE': 'Kenya',
-      'SN': 'Senegal',
-      'CI': 'Ivory Coast',
-      'UG': 'Uganda',
-      'TZ': 'Tanzania',
-      'ZA': 'South Africa',
-      'EG': 'Egypt'
-    };
-    return countryNames[countryCode] || countryCode;
-  };
-
-  const getCurrencyInfo = () => {
-    return paymentService.getCountryCurrencyInfo(countryCode);
+  const handleQuickAmount = (quickAmount: number) => {
+    setAmount(quickAmount);
   };
 
   if (!isAuthenticated) {
@@ -176,8 +210,6 @@ const AddFunds = () => {
       </div>
     );
   }
-
-  const currencyInfo = getCurrencyInfo();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-md">
@@ -216,10 +248,11 @@ const AddFunds = () => {
             Add Funds
           </CardTitle>
           <CardDescription>
-            Enter amount and select your country
+            Enter the amount you want to add to your account
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          {/* Amount Input */}
           <div className="space-y-2">
             <Label htmlFor="amount">Amount (USD)</Label>
             <Input
@@ -234,97 +267,105 @@ const AddFunds = () => {
             />
           </div>
 
+          {/* Quick Amount Buttons */}
           <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Select value={countryCode} onValueChange={handleCountryChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select country" />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.isArray(paymentService.getSupportedCountries()) ? paymentService.getSupportedCountries().map((country) => (
-                  <SelectItem key={country} value={country}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{getCountryFlag(country)}</span>
-                      {getCountryName(country)}
-                    </div>
-                  </SelectItem>
-                )) : (
-                  <SelectItem value="US" disabled>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🇺🇸</span>
-                      United States
-                    </div>
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+            <Label>Quick Amounts</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {quickAmounts.map((quickAmount) => (
+                <Button
+                  key={quickAmount}
+                  variant={amount === quickAmount ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleQuickAmount(quickAmount)}
+                  className="h-10"
+                >
+                  ${quickAmount}
+                </Button>
+              ))}
+            </div>
           </div>
 
-          {/* Currency Conversion Display */}
-          {conversionData && currencyInfo && (
-            <Card className="bg-gray-50">
-              <CardContent className="pt-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Info className="h-4 w-4" />
-                    <span>Payment Details</span>
+          {/* Payment Info */}
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="pt-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-medium">Payment Details</span>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Amount:</span>
+                    <span className="font-medium text-blue-900">${amount.toFixed(2)} USD</span>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Amount:</span>
-                      <div className="font-medium">${amount.toFixed(2)} USD</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Converted:</span>
-                      <div className="font-medium">
-                        {conversionData.data.converted_amount.toFixed(2)} {currencyInfo.currency_code}
-                      </div>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Payment Method:</span>
+                    <span className="font-medium text-blue-900">Mobile Money</span>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Fee (3%):</span>
-                      <div className="font-medium text-orange-600">
-                        {conversionData.data.fee.toFixed(2)} {currencyInfo.currency_code}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Total:</span>
-                      <div className="font-medium text-green-600 text-lg">
-                        {conversionData.data.total_amount.toFixed(2)} {currencyInfo.currency_symbol}
-                      </div>
-                    </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Country:</span>
+                    <span className="font-medium text-blue-900">Cameroon</span>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </div>
+            </CardContent>
+          </Card>
 
+          {/* Important Notice */}
+          <Card className="bg-yellow-50 border-yellow-200">
+            <CardContent className="pt-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium mb-1">Important:</p>
+                  <p>You will be redirected to a secure payment page to complete your transaction. The payment will be processed in your local currency (XAF) using Mobile Money.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Add Funds Button */}
           <Button 
             onClick={handleAddFunds}
-            disabled={isLoading || !amount || amount <= 0 || !countryCode || conversionLoading}
+            disabled={isCreatingPayment || !amount || amount <= 0}
             className="w-full"
             size="lg"
           >
-            {isLoading ? (
+            {isCreatingPayment ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirecting to Payment...
-              </>
-            ) : conversionLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Calculating...
+                Creating Payment Link...
               </>
             ) : (
               <>
                 <CreditCard className="mr-2 h-4 w-4" />
-                Pay {conversionData ? `${conversionData.data.total_amount.toFixed(2)} ${currencyInfo?.currency_symbol}` : `$${amount.toFixed(2)}`}
+                Add ${amount.toFixed(2)} to Account
               </>
             )}
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Help Section */}
+      <Card className="mt-6 bg-gray-50">
+        <CardContent className="pt-4">
+          <div className="text-center">
+            <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              If you encounter any issues with payment, please contact our support team.
+            </p>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const message = encodeURIComponent("Hello, I need help with adding funds to my DigiNum account");
+                window.open(`https://wa.me/237673289043?text=${message}`, '_blank');
+              }}
+            >
+              Contact Support
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>

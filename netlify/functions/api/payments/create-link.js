@@ -59,35 +59,35 @@ exports.handler = async (event, context) => {
     console.log('Creating payment link with AccountPe API:', accountPeRequest);
 
     try {
-      // Call AccountPe API to create payment link
-      const accountPeResponse = await axios.post(
+      // Call Swychr API to create payment link
+      const swychrResponse = await axios.post(
         'https://api.accountpe.com/api/payin/create_payment_links',
         accountPeRequest,
         {
           headers: {
             'Content-Type': 'application/json',
             // Add authentication if required
-            // 'Authorization': `Bearer ${process.env.ACCOUNTPE_API_KEY}`
+            // 'Authorization': `Bearer ${process.env.SWYCHR_API_KEY}`
           },
           timeout: 30000 // 30 second timeout
         }
       );
 
-      console.log('AccountPe API response:', accountPeResponse.data);
+      console.log('Swychr API response:', swychrResponse.data);
 
-      if (accountPeResponse.data && accountPeResponse.data.status === 200) {
+      if (swychrResponse.data && swychrResponse.data.status === 200) {
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
             success: true,
             data: {
-              payment_url: accountPeResponse.data.data?.payment_url || accountPeResponse.data.data?.url,
+              payment_url: swychrResponse.data.data?.payment_url || swychrResponse.data.data?.url,
               transaction_id: transaction_id,
               status: 'pending'
             },
-            status: accountPeResponse.data.status,
-            message: accountPeResponse.data.message || 'Payment link created successfully'
+            status: swychrResponse.data.status,
+            message: swychrResponse.data.message || 'Payment link created successfully'
           })
         };
       } else {
@@ -96,20 +96,20 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             success: false,
-            message: accountPeResponse.data?.message || 'Failed to create payment link',
-            status: accountPeResponse.data?.status || 400
+            message: swychrResponse.data?.message || 'Failed to create payment link',
+            status: swychrResponse.data?.status || 400
           })
         };
       }
 
     } catch (apiError) {
-      console.error('AccountPe API error:', apiError.response?.data || apiError.message);
+      console.error('Swychr API error:', apiError.response?.data || apiError.message);
       
-      // If AccountPe API is not available, fall back to mock response for development
+      // If Swychr API is not available, fall back to mock response for development
       if (process.env.NODE_ENV === 'development' || process.env.TEST_MODE === 'true') {
         console.log('Falling back to mock response for development/testing');
         
-        const mockPaymentUrl = `https://payment.accountpe.com/pay/${transaction_id}`;
+        const mockPaymentUrl = `https://payment.swychr.com/pay/${transaction_id}`;
         const mockResponse = {
           success: true,
           data: {
