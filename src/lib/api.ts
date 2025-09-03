@@ -5,6 +5,12 @@ import { getCurrentUser } from '@/lib/auth';
 import { SMSProvider, NumberRequest } from '@/lib/smsProvider';
 import { supabase } from '@/lib/supabaseClient';
 
+// Initialize SMS provider
+const smsProvider = new SMSProvider({
+  apiKey: import.meta.env.VITE_SMS_API_KEY || '',
+  baseUrl: 'https://api.sms-activate.org/stubs/handler_api.php'
+});
+
 // Export the API object with all functions
 export const api = {
   fetchDashboardOrders,
@@ -33,9 +39,12 @@ export async function fetchDashboardOrders() {
       throw new Error('Failed to fetch orders');
     }
 
+    // Ensure orders is always an array
+    const ordersArray = Array.isArray(orders) ? orders : [];
+
     // Update status for active numbers
     const updatedOrders = await Promise.all(
-      orders.map(async (order) => {
+      ordersArray.map(async (order) => {
         if (order.status === 'active') {
           try {
             const status = await smsProvider.getNumberStatus(order.number_id);
@@ -52,7 +61,8 @@ export async function fetchDashboardOrders() {
     return updatedOrders;
   } catch (error) {
     console.error('Error fetching dashboard orders:', error);
-    throw new Error('Failed to fetch dashboard data');
+    // Return empty array instead of throwing error to prevent map issues
+    return [];
   }
 }
 

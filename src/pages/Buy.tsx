@@ -285,7 +285,7 @@ const Buy = () => {
                 No countries available
               </div>
             )
-          )
+          )}
         </div>
       </div>
     );

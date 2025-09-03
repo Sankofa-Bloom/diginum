@@ -10,6 +10,7 @@ import NumberCard from '@/components/NumberCard';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from '@/hooks/use-toast';
 import { fetchDashboardOrders } from '@/lib/api';
+import { apiMock } from '@/lib/apiMock';
 
 
 
@@ -28,7 +29,9 @@ React.useEffect(() => {
   setIsLoading(true);
   fetchDashboardOrders()
     .then(data => {
-      setOrders(data.orders || data); // backend may return {orders: [...]}
+      // Ensure data is always an array
+      const ordersData = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
+      setOrders(ordersData);
       setError(null);
     })
     .catch(e => {
@@ -266,19 +269,21 @@ React.useEffect(() => {
                     </Button>
                   </div>
                 ) : (
-                  {Array.isArray(activeOrders) ? activeOrders.map((order) => (
-                     <NumberCard
-                       key={order.id}
-                       order={order}
-                       onRefresh={handleRefreshOrder}
-                       onCancel={handleCancelOrder}
-                       onRequestAnother={handleRequestAnotherSMS}
-                     />
-                  )) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No active orders
-                    </div>
-                  )}
+                  <>
+                    {Array.isArray(activeOrders) ? activeOrders.map((order) => (
+                       <NumberCard
+                         key={order.id}
+                         order={order}
+                         onRefresh={handleRefreshOrder}
+                         onCancel={handleCancelOrder}
+                         onRequestAnother={handleRequestAnotherSMS}
+                       />
+                    )) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No active orders
+                      </div>
+                    )}
+                  </>
                 )}
               </TabsContent>
 
@@ -292,13 +297,15 @@ React.useEffect(() => {
                     </p>
                   </div>
                  ) : (
-                   {Array.isArray(completedOrders) ? completedOrders.map((order) => (
-                     <NumberCard key={order.id} order={order} onRequestAnother={handleRequestAnotherSMS} />
-                   )) : (
-                     <div className="text-center py-8 text-muted-foreground">
-                       No completed orders
-                     </div>
-                   )}
+                   <>
+                     {Array.isArray(completedOrders) ? completedOrders.map((order) => (
+                       <NumberCard key={order.id} order={order} onRequestAnother={handleRequestAnotherSMS} />
+                     )) : (
+                       <div className="text-center py-8 text-muted-foreground">
+                         No completed orders
+                       </div>
+                     )}
+                   </>
                  )}
               </TabsContent>
 
@@ -312,13 +319,15 @@ React.useEffect(() => {
                     </p>
                   </div>
                  ) : (
-                   {Array.isArray(expiredOrders) ? expiredOrders.map((order) => (
-                     <NumberCard key={order.id} order={order} onRequestAnother={handleRequestAnotherSMS} />
-                   )) : (
-                     <div className="text-center py-8 text-muted-foreground">
-                       No expired orders
-                     </div>
-                   )}
+                   <>
+                     {Array.isArray(expiredOrders) ? expiredOrders.map((order) => (
+                       <NumberCard key={order.id} order={order} onRequestAnother={handleRequestAnotherSMS} />
+                     )) : (
+                       <div className="text-center py-8 text-muted-foreground">
+                         No expired orders
+                       </div>
+                     )}
+                   </>
                  )}
               </TabsContent>
             </Tabs>
