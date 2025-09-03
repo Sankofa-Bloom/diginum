@@ -6,12 +6,12 @@
 const getApiBaseUrl = () => {
   // Force production URL if we're on netlify.app domain
   if (typeof window !== 'undefined' && window.location.origin.includes('netlify.app')) {
-    return '/.netlify/functions/api';
+    return '/api';
   }
   
   // Check if we're in production build
   if (import.meta.env.PROD) {
-    return '/.netlify/functions/api';
+    return '/api';
   }
   
   // Development mode - use environment variable or localhost
