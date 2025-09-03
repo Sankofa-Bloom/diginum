@@ -121,17 +121,32 @@ const Buy = () => {
     }
   };
 
-  const loadCountries = async () => {
+  const loadCountries = async (retryCount = 0) => {
     setLoadingCountries(true);
     try {
-      console.log('Loading countries from API...');
+      console.log('Loading countries from API... (attempt', retryCount + 1, ')');
       const response = await apiClient.get('/countries');
       console.log('Countries API response:', response);
-      setCountries(response);
+      
+      // Ensure response is an array
+      if (Array.isArray(response)) {
+        setCountries(response);
+        console.log('Countries loaded successfully:', response.length, 'countries');
+      } else {
+        throw new Error('Invalid response format: expected array');
+      }
     } catch (error) {
       console.error('Failed to load countries:', error);
       console.error('Error details:', error.response?.data || error.message);
-      toast.error('Failed to load countries. Please try again.');
+      
+      // Retry once if it's a network error
+      if (retryCount === 0 && (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error'))) {
+        console.log('Retrying countries API call...');
+        setTimeout(() => loadCountries(1), 1000);
+        return;
+      }
+      
+      toast.error('Failed to load countries. Using fallback data.');
       
       // Set fallback countries for development
       const fallbackCountries = [
@@ -156,9 +171,11 @@ const Buy = () => {
         { id: '18', name: 'Congo', code: '+242' },
         { id: '19', name: 'Nigeria', code: '+234' },
         { id: '20', name: 'Macau', code: '+853' },
-        { id: '21', name: 'Egypt', code: '+20' }
+        { id: '21', name: 'Egypt', code: '+20' },
+        { id: '40', name: 'Cameroon', code: '+237' }
       ];
       setCountries(fallbackCountries);
+      console.log('Using fallback countries:', fallbackCountries.length, 'countries');
     } finally {
       setLoadingCountries(false);
     }
@@ -257,6 +274,13 @@ const Buy = () => {
     }
   }, [step]);
 
+  // Also load countries when authenticated
+  useEffect(() => {
+    if (isAuthenticated && countries.length === 0) {
+      loadCountries();
+    }
+  }, [isAuthenticated]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -317,7 +341,21 @@ const Buy = () => {
               </Card>
             )) : (
               <div className="col-span-full text-center py-8 text-muted-foreground">
-                No countries available
+                <p className="mb-4">No countries available</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => loadCountries()}
+                  disabled={loadingCountries}
+                >
+                  {loadingCountries ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Retry'
+                  )}
+                </Button>
               </div>
             )
           )}
@@ -450,7 +488,21 @@ const Buy = () => {
             
             {!loadingCountries && (!Array.isArray(countries) || countries.length === 0) && (
               <div className="text-center py-8 text-muted-foreground">
-                No countries available at the moment.
+                <p className="mb-4">No countries available at the moment.</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => loadCountries()}
+                  disabled={loadingCountries}
+                >
+                  {loadingCountries ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    'Retry'
+                  )}
+                </Button>
               </div>
             )}
           </CardContent>
