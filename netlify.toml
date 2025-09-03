@@ -52,6 +52,9 @@
   SUPABASE_URL = "https://xoivxzjhgjyvuzcmzcas.supabase.co"
   SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhvaXZ4empoZ2p5dnV6Y216Y2FzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIyNTQ1NjgsImV4cCI6MjA2NzgzMDU2OH0.ny0Gnf6uVbk9nrLq6VTYqjf9KPVSt2KczF223hf8ZZg"
   
+  # SMS Provider API Key
+  SMS_API_KEY = "7abe435e86df50bf4fe035f416bf1446"
+  
   # URLs
   FRONTEND_URL = "https://diginum.netlify.app"
   BACKEND_URL = "https://diginum.netlify.app"
